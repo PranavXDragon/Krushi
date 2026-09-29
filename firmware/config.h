@@ -1,34 +1,58 @@
 #pragma once
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+
 #if defined(ARDUINO) || defined(ESP32)
 #include <Arduino.h>
-#elif defined(__cplusplus)
-#include <string>
-#include <cstdint>
-using String = std::string;
+#else
+class String {
+  const char* _s;
+public:
+  String() : _s("") {}
+  String(const char* s) : _s(s ? s : "") {}
+  const char* c_str() const { return _s; }
+  size_t length() const { return strlen(_s); }
+  bool operator==(const String& o) const { return strcmp(_s, o._s) == 0; }
+  bool operator!=(const String& o) const { return strcmp(_s, o._s) != 0; }
+};
 #endif
+
+// ============================================================================
+// KRUSHI (SIH26232) — Cloud & Edge Telematics Configuration
+// Cold-Chain Integrity Platform with Supabase & Polygon Verification
+// ============================================================================
 
 #define CLOUD_ENABLED 1
 
+// 1. Ingestion Gateway API & Endpoints
+// Points to Krushi Secure Gateway or Supabase Edge Ingestion Function
 #define GATEWAY_HOST               "api.agritrace.krushi.gov.in"
 #define GATEWAY_PORT               443
 #define GATEWAY_SECURE_INGEST_URL  "https://api.agritrace.krushi.gov.in/api/v1/telemetry/secure-ingest"
 #define GATEWAY_BATCH_INGEST_URL   "https://api.agritrace.krushi.gov.in/api/v1/telemetry/batch-ingest"
 #define GATEWAY_HEARTBEAT_URL      "https://api.agritrace.krushi.gov.in/api/v1/health"
 
+// 2. Cryptographic Device Identity & Authentication
 #define DEVICE_ID                  "AGRITRACE-001"
 #define DEFAULT_SHIPMENT_ID        "04beaccb-7c55-44ab-aa84-2a3f338dcf1c"
 #define DEVICE_AUTH_TOKEN          "ktok_live_0192837465abcdef"
 #define FIRMWARE_VERSION           "1.2.0-gov-prod"
 
-#define MAX_BATCH_SIZE             10
-#define MAX_OFFLINE_QUEUE_CAPACITY 5000
-#define TELEMETRY_INTERVAL_MS      10000
+// 3. Queue & Bounded Batch Constraints
+#define MAX_BATCH_SIZE             10       // Max records per single HTTPS burst
+#define MAX_OFFLINE_QUEUE_CAPACITY 5000     // Up to ~7 days of 1-minute interval data
+#define TELEMETRY_INTERVAL_MS      10000    // 10s live transit sampling interval
 
-#define INITIAL_BACKOFF_MS         2000
-#define MAX_BACKOFF_MS             60000
+// 4. Retry & Exponential Backoff Timing
+#define INITIAL_BACKOFF_MS         2000     // 2s initial retry delay
+#define MAX_BACKOFF_MS             60000    // 60s max exponential cap
 #define BACKOFF_MULTIPLIER         2.0f
-#define JITTER_MAX_MS              1500
+#define JITTER_MAX_MS              1500     // Randomization to prevent thundering herd
 
+// 5. Root CA Certificate for TLS Pinning (ISRG Root X1 / Supabase Root)
 static const char ROOT_CA_CERTIFICATE[] PROGMEM = 
 "-----BEGIN CERTIFICATE-----\n"
 "MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw\n"

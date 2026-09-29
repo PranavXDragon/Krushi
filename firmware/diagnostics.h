@@ -1,11 +1,36 @@
 #pragma once
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+
 #if defined(ARDUINO) || defined(ESP32)
 #include <Arduino.h>
-#elif defined(__cplusplus)
-#include <string>
-#include <cstdint>
-using String = std::string;
+#else
+class String {
+  const char* _s;
+public:
+  String() : _s("") {}
+  String(const char* s) : _s(s ? s : "") {}
+  const char* c_str() const { return _s; }
+  size_t length() const { return strlen(_s); }
+  bool operator==(const String& o) const { return strcmp(_s, o._s) == 0; }
+  bool operator!=(const String& o) const { return strcmp(_s, o._s) != 0; }
+};
+
+struct SerialFallback {
+  void print(const char* s) { printf("%s", s); }
+  void println(const char* s = "") { printf("%s\n", s); }
+  template<typename... Args> void printf(const char* fmt, Args... args) { ::printf(fmt, args...); }
+};
+static SerialFallback Serial;
 #endif
+
+// ============================================================================
+// KRUSHI Diagnostics & Health Monitor
+// Rate-limited telemetry error tracking and audit event recorder
+// ============================================================================
 
 enum class DiagSeverity {
   INFO,
@@ -24,6 +49,7 @@ public:
 
   void raise(const char* code, const char* severity, const char* message) {
     unsigned long now = millis();
+    // Rate limit duplicate log floods (minimum 1 second between non-critical logs)
     if (strcmp(severity, "CRITICAL") != 0 && (now - lastLogTime < 1000) && lastCode == code) {
       suppressedCount++;
       return;

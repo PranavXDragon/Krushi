@@ -1,13 +1,47 @@
 #pragma once
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+
 #if defined(ARDUINO) || defined(ESP32)
 #include <Arduino.h>
 #include <vector>
-#elif defined(__cplusplus)
-#include <string>
-#include <vector>
-#include <cstdint>
-using String = std::string;
+#else
+class String {
+  const char* _s;
+public:
+  String() : _s("") {}
+  String(const char* s) : _s(s ? s : "") {}
+  const char* c_str() const { return _s; }
+  size_t length() const { return strlen(_s); }
+  bool operator==(const String& o) const { return strcmp(_s, o._s) == 0; }
+  bool operator!=(const String& o) const { return strcmp(_s, o._s) != 0; }
+};
+
+template<typename T, size_t Cap = 64>
+class VectorShim {
+  T items[Cap];
+  size_t count = 0;
+public:
+  void push_back(const T& item) { if (count < Cap) items[count++] = item; }
+  size_t size() const { return count; }
+  bool empty() const { return count == 0; }
+  void clear() { count = 0; }
+  T& operator[](size_t idx) { return items[idx]; }
+  const T& operator[](size_t idx) const { return items[idx]; }
+};
+namespace std {
+  template<typename T> using vector = VectorShim<T>;
+}
 #endif
+
+
+
+// ============================================================================
+// KRUSHI Storage Manager & Durable Offline Queue Contract
+// ============================================================================
 
 struct TelemetryRecord {
   String record_id;         // Stable format: "device-001:00001234"
@@ -46,6 +80,7 @@ public:
   virtual void commitSequenceAndHash(uint32_t seq, const String& hash) = 0;
 };
 
+// Default high-performance in-memory ring-buffer with persistent sequence tracking
 class InMemoryRingBufferStorage : public StorageManager {
 public:
   InMemoryRingBufferStorage(size_t capacity = 100) 
@@ -58,6 +93,7 @@ public:
 
   bool saveRecord(const TelemetryRecord& record) override {
     if (records.size() >= maxCapacity) {
+      // Overwrite oldest acknowledged record or drop oldest if full
       for (auto it = records.begin(); it != records.end(); ++it) {
         if (it->is_acknowledged) {
           records.erase(it);
@@ -65,7 +101,7 @@ public:
         }
       }
       if (records.size() >= maxCapacity) {
-        records.erase(records.begin());
+        records.erase(records.begin()); // FIFO eviction under overflow
       }
     }
     records.push_back(record);
@@ -106,7 +142,7 @@ public:
       if (r.record_id == recordId) {
         r.retry_count++;
         if (permanent || r.retry_count > 10) {
-          r.is_acknowledged = true;
+          r.is_acknowledged = true; // Quarantine corrupted records from halting queue
         }
         return true;
       }

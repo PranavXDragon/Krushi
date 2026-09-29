@@ -101,5 +101,35 @@ export const api = {
   corruptHashForAudit: async () => {
     const res = await fetch(`${API_BASE}/simulation/tamper-corrupt-hash`, { method: 'POST' });
     return res.json();
+  },
+
+  // User Authentication
+  signUp: async (payload: { name: string; email: string; password: string; role?: string; phone?: string; organization?: string }) => {
+    const res = await fetch(`${API_BASE}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || 'Signup failed');
+    }
+    return data;
+  },
+  signIn: async (payload: { email: string; password: string }) => {
+    const res = await fetch(`${API_BASE}/auth/signin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || 'Invalid email or password');
+    }
+    return data;
+  },
+  getMe: async (email: string) => {
+    const res = await fetch(`${API_BASE}/auth/me?email=${encodeURIComponent(email)}`);
+    return res.json();
   }
 };

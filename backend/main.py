@@ -14,7 +14,7 @@ from sqlalchemy import desc, func
 
 from models import (
     init_db, get_db, SessionLocal,
-    Device, Shipment, TelemetryRecord, ShipmentEvent, Alert, LedgerAnchor
+    Device, Shipment, TelemetryRecord, ShipmentEvent, Alert, LedgerAnchor, User
 )
 from crypto_engine import CryptoEngine
 from simulator import simulator_instance, IoTSimulator
@@ -24,6 +24,62 @@ from supabase_sync import (
     get_supabase_client,
     push_telemetry_to_supabase
 )
+
+import hashlib
+import uuid
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(f"krushi_salt_{password}".encode()).hexdigest()
+
+def seed_default_users(db: Session):
+    demo_users = [
+        {
+            "name": "Rajesh Patil",
+            "email": "rajesh.patil@kisan.in",
+            "password": "krushi2026",
+            "role": "FARMER",
+            "phone": "+91 98201 44512",
+            "organization": "Ratnagiri Mango Growers Co-op"
+        },
+        {
+            "name": "Sunil Shinde",
+            "email": "transport@kisancold.in",
+            "password": "krushi2026",
+            "role": "LOGISTICS",
+            "phone": "+91 98220 11984",
+            "organization": "KisanCold Reefer Express"
+        },
+        {
+            "name": "Dr. Ananya Mehta",
+            "email": "inspector.mehta@apeda.gov.in",
+            "password": "krushi2026",
+            "role": "INSPECTOR",
+            "phone": "+91 98110 33491",
+            "organization": "APEDA Export Certification Authority"
+        },
+        {
+            "name": "Vikram Kadam",
+            "email": "trader.vashi@apmc.in",
+            "password": "krushi2026",
+            "role": "BUYER",
+            "phone": "+91 94230 55811",
+            "organization": "Vashi Wholesale APMC Terminal"
+        }
+    ]
+    for u in demo_users:
+        if not db.query(User).filter(User.email == u["email"]).first():
+            user_obj = User(
+                id=f"usr-{uuid.uuid4().hex[:10]}",
+                name=u["name"],
+                email=u["email"],
+                hashed_password=hash_password(u["password"]),
+                role=u["role"],
+                phone=u["phone"],
+                organization=u["organization"],
+                created_at=datetime.utcnow()
+            )
+            db.add(user_obj)
+    db.commit()
 
 app = FastAPI(
     title="Krushi API",
@@ -51,6 +107,7 @@ async def on_startup():
         count = db.query(Shipment).count()
         if count == 0:
             seed_database()
+        seed_default_users(db)
     finally:
         db.close()
 
@@ -101,6 +158,18 @@ class ShipmentCreateSchema(BaseModel):
 class AlertUpdateSchema(BaseModel):
     status: str # ACKNOWLEDGED or RESOLVED
 
+class SignUpSchema(BaseModel):
+    name: str
+    email: str
+    password: str
+    role: Optional[str] = "FARMER"
+    phone: Optional[str] = None
+    organization: Optional[str] = None
+
+class SignInSchema(BaseModel):
+    email: str
+    password: str
+
 class SecureTelemetryIngestSchema(BaseModel):
     device_id: str
     shipment_id: Optional[str] = None
@@ -119,6 +188,91 @@ class SecureTelemetryIngestSchema(BaseModel):
     record_hash: str
     signature: str
     device_token: Optional[str] = None
+
+# ================= AUTHENTICATION ENDPOINTS =================
+
+@app.post("/api/v1/auth/signup")
+def auth_signup(payload: SignUpSchema, db: Session = Depends(get_db)):
+    email_clean = payload.email.strip().lower()
+    existing = db.query(User).filter(User.email == email_clean).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="An account with this email address already exists.")
+    
+    new_user = User(
+        id=f"usr-{uuid.uuid4().hex[:10]}",
+        name=payload.name.strip(),
+        email=email_clean,
+        hashed_password=hash_password(payload.password),
+        role=payload.role or "FARMER",
+        phone=payload.phone.strip() if payload.phone else None,
+        organization=payload.organization.strip() if payload.organization else None,
+        created_at=datetime.utcnow()
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    token = f"krushi_jwt_{uuid.uuid4().hex}"
+
+    return {
+        "status": "success",
+        "message": "User account registered successfully",
+        "token": token,
+        "user": {
+            "id": new_user.id,
+            "name": new_user.name,
+            "email": new_user.email,
+            "role": new_user.role,
+            "phone": new_user.phone,
+            "organization": new_user.organization,
+            "created_at": new_user.created_at.isoformat()
+        }
+    }
+
+@app.post("/api/v1/auth/signin")
+def auth_signin(payload: SignInSchema, db: Session = Depends(get_db)):
+    email_clean = payload.email.strip().lower()
+    hashed = hash_password(payload.password)
+    user = db.query(User).filter(User.email == email_clean, User.hashed_password == hashed).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email address or password.")
+
+    token = f"krushi_jwt_{uuid.uuid4().hex}"
+
+    return {
+        "status": "success",
+        "message": "Signed in successfully",
+        "token": token,
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "phone": user.phone,
+            "organization": user.organization,
+            "created_at": user.created_at.isoformat()
+        }
+    }
+
+@app.get("/api/v1/auth/me")
+def auth_me(email: Optional[str] = None, db: Session = Depends(get_db)):
+    if not email:
+        return {"authenticated": False}
+    user = db.query(User).filter(User.email == email.strip().lower()).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "authenticated": True,
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "phone": user.phone,
+            "organization": user.organization,
+            "created_at": user.created_at.isoformat()
+        }
+    }
 
 # ================= REST ENDPOINTS =================
 

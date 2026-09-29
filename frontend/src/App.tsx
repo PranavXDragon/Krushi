@@ -11,6 +11,7 @@ import { CreateShipmentView } from './components/CreateShipmentView';
 import { TransitHistoryView } from './components/TransitHistoryView';
 import { DevicesView } from './components/DevicesView';
 import { ConsumerVerifyView } from './components/ConsumerVerifyView';
+import { AuthModal, AuthUser } from './components/AuthModal';
 import { api } from './services/api';
 import { Shipment, Device, TelemetryRecord, Alert, ShipmentEvent, VerificationResult, AnalyticsData } from './types';
 
@@ -34,6 +35,46 @@ export function App() {
 
   // Toast feedback
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' | 'error' | 'info' } | null>(null);
+
+  // User Authentication State
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
+    try {
+      const saved = localStorage.getItem('krushi_user');
+      return saved ? JSON.parse(saved) : {
+        id: 'usr-c0ec6aa7b6',
+        name: 'Rajesh Patil',
+        email: 'rajesh.patil@kisan.in',
+        role: 'FARMER',
+        organization: 'Ratnagiri Alphonso Co-operative',
+        created_at: new Date().toISOString()
+      };
+    } catch {
+      return null;
+    }
+  });
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
+
+  const handleAuthSuccess = (user: AuthUser, token: string) => {
+    setCurrentUser(user);
+    try {
+      localStorage.setItem('krushi_user', JSON.stringify(user));
+      localStorage.setItem('krushi_token', token);
+    } catch (e) {
+      console.error('Could not save auth to storage:', e);
+    }
+  };
+
+  const handleSignOut = () => {
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem('krushi_user');
+      localStorage.removeItem('krushi_token');
+    } catch (e) {
+      console.error('Could not remove auth from storage:', e);
+    }
+    showToast('Signed out of Krushi portal', 'info');
+  };
 
   const showToast = (message: string, type: 'success' | 'warning' | 'error' | 'info' = 'info') => {
     setToast({ message, type });
@@ -197,6 +238,16 @@ export function App() {
             devices={devices}
             onSelectShipment={(id) => setSelectedShipmentId(id)}
             onNavigateTab={setActiveTab}
+            user={currentUser}
+            onOpenSignIn={() => {
+              setAuthModalMode('signin');
+              setAuthModalOpen(true);
+            }}
+            onOpenSignUp={() => {
+              setAuthModalMode('signup');
+              setAuthModalOpen(true);
+            }}
+            onSignOut={handleSignOut}
           />
 
           {/* Page Body */}
@@ -331,6 +382,15 @@ export function App() {
           <span>{toast.message}</span>
         </div>
       )}
+
+      {/* Authentication Modal (Sign In & Sign Up) */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode={authModalMode}
+        onAuthSuccess={handleAuthSuccess}
+        onShowToast={showToast}
+      />
 
     </div>
   );

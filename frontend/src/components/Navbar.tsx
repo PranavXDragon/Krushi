@@ -11,9 +11,15 @@ import {
   Tag, 
   CheckCircle2, 
   Clock,
-  Sparkles
+  Sparkles,
+  LogIn,
+  UserPlus,
+  LogOut,
+  ChevronDown,
+  User as UserIcon
 } from 'lucide-react';
 import { Shipment, Device } from '../types';
+import { AuthUser } from './AuthModal';
 
 interface NavbarProps {
   title: string;
@@ -26,6 +32,10 @@ interface NavbarProps {
   devices?: Device[];
   onSelectShipment?: (id: string) => void;
   onNavigateTab?: (tab: string) => void;
+  user?: AuthUser | null;
+  onOpenSignIn?: () => void;
+  onOpenSignUp?: () => void;
+  onSignOut?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -38,10 +48,16 @@ export const Navbar: React.FC<NavbarProps> = ({
   shipments = [],
   devices = [],
   onSelectShipment,
-  onNavigateTab
+  onNavigateTab,
+  user,
+  onOpenSignIn,
+  onOpenSignUp,
+  onSignOut
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const query = searchQuery.trim().toLowerCase();
 
@@ -71,6 +87,9 @@ export const Navbar: React.FC<NavbarProps> = ({
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -325,17 +344,89 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Farmer & Citizen Friendly Profile Badge */}
-        <div className="flex items-center gap-3 pl-2">
-          <div className="flex items-center gap-2.5 bg-emerald-50/70 hover:bg-emerald-100/70 p-1.5 pr-3.5 rounded-xl border border-emerald-200/80 transition cursor-pointer">
-            <div className="w-8 h-8 rounded-lg bg-emerald-700 text-white font-bold flex items-center justify-center text-sm shadow-xs">
-              <Sprout className="w-4 h-4" />
+        {/* Farmer & Citizen Friendly Profile / Auth Controls */}
+        <div ref={profileRef} className="relative pl-2">
+          {user ? (
+            <div>
+              <div 
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-2.5 bg-emerald-50/70 hover:bg-emerald-100/70 p-1.5 pr-3 rounded-xl border border-emerald-200/80 transition cursor-pointer select-none"
+              >
+                <div className="w-8 h-8 rounded-lg bg-emerald-700 text-white font-bold flex items-center justify-center text-xs shadow-xs">
+                  {user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                </div>
+                <div className="text-left hidden sm:block">
+                  <span className="text-xs font-bold text-slate-900 block leading-tight truncate max-w-[120px]">{user.name}</span>
+                  <span className="text-[10px] font-semibold text-emerald-700 tracking-wider uppercase block">
+                    {user.role}
+                  </span>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              </div>
+
+              {/* Profile Dropdown Menu */}
+              {profileOpen && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl border border-slate-200 shadow-xl p-3 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="p-2 border-b border-slate-100 mb-2">
+                    <span className="text-xs font-bold text-slate-800 block truncate">{user.name}</span>
+                    <span className="text-[11px] text-slate-500 block truncate">{user.email}</span>
+                    {user.organization && (
+                      <span className="text-[10px] text-emerald-700 font-semibold mt-1 block truncate">
+                        🏢 {user.organization}
+                      </span>
+                    )}
+                    <span className="inline-block mt-1.5 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase">
+                      {user.role} Account
+                    </span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => {
+                        setProfileOpen(false);
+                        onOpenSignIn?.();
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition cursor-pointer"
+                    >
+                      <UserIcon className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Switch Account / Role</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setProfileOpen(false);
+                        onSignOut?.();
+                      }}
+                      className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition cursor-pointer"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="text-left">
-              <span className="text-xs font-bold text-slate-900 block leading-tight">Farmer Portal</span>
-              <span className="text-[10px] font-semibold text-emerald-700 tracking-wider uppercase block">Kisan Hub</span>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onOpenSignIn}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-emerald-700 hover:bg-slate-100 transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onOpenSignUp}
+                className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Sign Up</span>
+              </button>
             </div>
-          </div>
+          )}
         </div>
 
       </div>

@@ -82,7 +82,7 @@ export const TruckOverlay: React.FC<TruckOverlayProps> = ({
       </div>
 
       {/* Main Truck Graphic Container with HTML / React Compartment Overlays */}
-      <div className="relative mt-6 rounded-2xl overflow-hidden bg-gradient-to-b from-slate-50 via-slate-100 to-slate-200 p-4 border border-slate-200">
+      <div className="relative mt-6 rounded-2xl overflow-hidden bg-transparent p-2">
         
         {/* Base Layer Truck Image */}
         <div className="relative max-w-4xl mx-auto flex items-center justify-center">

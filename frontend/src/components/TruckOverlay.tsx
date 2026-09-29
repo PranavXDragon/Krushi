@@ -132,32 +132,32 @@ export const TruckOverlay: React.FC<TruckOverlayProps> = ({
             className="w-full h-auto object-contain select-none filter drop-shadow-md transition-all duration-300"
           />
 
-          {/* In-Trailer Compartment A (Forward Chilled Cargo Chamber) */}
+          {/* In-Trailer Compartment A (Forward Chilled Cargo Chamber) - Borderless & Perfectly Fitted */}
           <div 
-            className={`absolute top-[9%] left-[34%] w-[29.5%] h-[54%] rounded-xl p-2 sm:p-2.5 flex flex-col justify-between backdrop-blur-md transition-all duration-300 border-2 shadow-sm ${
+            className={`absolute top-[9%] left-[33.5%] w-[30.5%] h-[47%] rounded-xl p-2 sm:p-2.5 flex flex-col justify-between backdrop-blur-md transition-all duration-300 border-0 shadow-sm ${
               isTempExcursion || isGasExcursion
-                ? 'bg-rose-50/90 border-rose-500 shadow-rose-500/20'
-                : 'bg-white/85 hover:bg-white/95 border-teal-500/80 shadow-teal-500/10'
+                ? 'bg-rose-50/90 shadow-rose-500/20'
+                : 'bg-white/85 hover:bg-white/95 shadow-slate-300/40'
             }`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between pb-1 border-b border-slate-200/70">
+            <div className="flex items-center justify-between pb-1 border-b border-slate-100">
               <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isTempExcursion || isGasExcursion ? 'bg-rose-500 animate-ping' : 'bg-teal-500 animate-pulse'}`} />
-                <span className="text-[10px] sm:text-xs font-bold text-slate-900 truncate">Compartment A</span>
+                <span className="text-[10px] sm:text-xs font-bold text-slate-800 truncate">Compartment A</span>
               </div>
-              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-teal-50 border border-teal-200 text-teal-800 font-bold flex-shrink-0">
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100/80 text-slate-700 font-bold flex-shrink-0">
                 {shipment.batch_code}
               </span>
             </div>
 
-            {/* Real-time 3-Metric Instrument Grid */}
+            {/* Real-time 3-Metric Instrument Grid (Clean Borderless Mini-Cards) */}
             <div className="grid grid-cols-3 gap-1 sm:gap-1.5 my-auto text-center">
               {/* Temp */}
-              <div className={`p-1 rounded-lg border transition-colors ${
+              <div className={`p-1 rounded-lg border-0 transition-colors ${
                 isTempExcursion 
-                  ? 'bg-rose-100 border-rose-300 text-rose-900 font-bold' 
-                  : 'bg-slate-50/90 border-slate-200/90 text-slate-800'
+                  ? 'bg-rose-100/90 text-rose-900 font-bold' 
+                  : 'bg-slate-100/80 text-slate-800'
               }`}>
                 <div className="flex items-center justify-center gap-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium">
                   <Thermometer className="w-2.5 h-2.5 text-teal-600 flex-shrink-0" />
@@ -169,7 +169,7 @@ export const TruckOverlay: React.FC<TruckOverlayProps> = ({
               </div>
 
               {/* Humidity */}
-              <div className="p-1 rounded-lg bg-slate-50/90 border border-slate-200/90 text-slate-800">
+              <div className="p-1 rounded-lg bg-slate-100/80 border-0 text-slate-800">
                 <div className="flex items-center justify-center gap-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium">
                   <Droplets className="w-2.5 h-2.5 text-blue-500 flex-shrink-0" />
                   <span>Hum</span>
@@ -180,10 +180,10 @@ export const TruckOverlay: React.FC<TruckOverlayProps> = ({
               </div>
 
               {/* Gas */}
-              <div className={`p-1 rounded-lg border transition-colors ${
+              <div className={`p-1 rounded-lg border-0 transition-colors ${
                 isGasExcursion 
-                  ? 'bg-rose-100 border-rose-300 text-rose-900 font-bold animate-pulse' 
-                  : 'bg-slate-50/90 border-slate-200/90 text-slate-800'
+                  ? 'bg-rose-100/90 text-rose-900 font-bold animate-pulse' 
+                  : 'bg-slate-100/80 text-slate-800'
               }`}>
                 <div className="flex items-center justify-center gap-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium">
                   <Flame className="w-2.5 h-2.5 text-amber-500 flex-shrink-0" />
@@ -196,31 +196,31 @@ export const TruckOverlay: React.FC<TruckOverlayProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between text-[8px] sm:text-[9px] pt-1 border-t border-slate-200/60 text-slate-600">
-              <span className="font-semibold text-teal-700 truncate">Front Bay · Primary Chilled</span>
+            <div className="flex items-center justify-between text-[8px] sm:text-[9px] pt-1 border-t border-slate-100 text-slate-500">
+              <span className="font-semibold text-slate-600 truncate">Front Bay · Primary Chilled</span>
               <span className="font-bold text-slate-700">IoT #01</span>
             </div>
           </div>
 
-          {/* In-Trailer Compartment B (Rear Deep Cold Chamber) */}
+          {/* In-Trailer Compartment B (Rear Deep Cold Chamber) - Borderless & Perfectly Fitted */}
           <div 
-            className="absolute top-[9%] left-[65.5%] w-[29.5%] h-[54%] rounded-xl p-2 sm:p-2.5 flex flex-col justify-between backdrop-blur-md bg-white/85 hover:bg-white/95 border-2 border-sky-500/80 shadow-sm shadow-sky-500/10 transition-all duration-300"
+            className="absolute top-[9%] left-[65.5%] w-[30.5%] h-[47%] rounded-xl p-2 sm:p-2.5 flex flex-col justify-between backdrop-blur-md bg-white/85 hover:bg-white/95 border-0 shadow-sm shadow-slate-300/40 transition-all duration-300"
           >
             {/* Header */}
-            <div className="flex items-center justify-between pb-1 border-b border-slate-200/70">
+            <div className="flex items-center justify-between pb-1 border-b border-slate-100">
               <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
                 <span className="w-2 h-2 rounded-full bg-sky-500 flex-shrink-0" />
-                <span className="text-[10px] sm:text-xs font-bold text-slate-900 truncate">Compartment B</span>
+                <span className="text-[10px] sm:text-xs font-bold text-slate-800 truncate">Compartment B</span>
               </div>
-              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-sky-50 border border-sky-200 text-sky-800 font-bold flex-shrink-0">
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100/80 text-slate-700 font-bold flex-shrink-0">
                 AG-2402
               </span>
             </div>
 
-            {/* Real-time 3-Metric Instrument Grid */}
+            {/* Real-time 3-Metric Instrument Grid (Clean Borderless Mini-Cards) */}
             <div className="grid grid-cols-3 gap-1 sm:gap-1.5 my-auto text-center">
               {/* Temp */}
-              <div className="p-1 rounded-lg bg-slate-50/90 border border-slate-200/90 text-slate-800">
+              <div className="p-1 rounded-lg bg-slate-100/80 border-0 text-slate-800">
                 <div className="flex items-center justify-center gap-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium">
                   <Thermometer className="w-2.5 h-2.5 text-sky-600 flex-shrink-0" />
                   <span>Temp</span>
@@ -231,7 +231,7 @@ export const TruckOverlay: React.FC<TruckOverlayProps> = ({
               </div>
 
               {/* Humidity */}
-              <div className="p-1 rounded-lg bg-slate-50/90 border border-slate-200/90 text-slate-800">
+              <div className="p-1 rounded-lg bg-slate-100/80 border-0 text-slate-800">
                 <div className="flex items-center justify-center gap-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium">
                   <Droplets className="w-2.5 h-2.5 text-blue-500 flex-shrink-0" />
                   <span>Hum</span>
@@ -242,7 +242,7 @@ export const TruckOverlay: React.FC<TruckOverlayProps> = ({
               </div>
 
               {/* Gas */}
-              <div className="p-1 rounded-lg bg-slate-50/90 border border-slate-200/90 text-slate-800">
+              <div className="p-1 rounded-lg bg-slate-100/80 border-0 text-slate-800">
                 <div className="flex items-center justify-center gap-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium">
                   <Flame className="w-2.5 h-2.5 text-amber-500 flex-shrink-0" />
                   <span>Gas</span>
@@ -254,8 +254,8 @@ export const TruckOverlay: React.FC<TruckOverlayProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between text-[8px] sm:text-[9px] pt-1 border-t border-slate-200/60 text-slate-600">
-              <span className="font-semibold text-sky-700 truncate">Rear Bay · Secondary Cell</span>
+            <div className="flex items-center justify-between text-[8px] sm:text-[9px] pt-1 border-t border-slate-100 text-slate-500">
+              <span className="font-semibold text-slate-600 truncate">Rear Bay · Secondary Cell</span>
               <span className="font-bold text-slate-700">IoT #02</span>
             </div>
           </div>

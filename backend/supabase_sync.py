@@ -226,3 +226,34 @@ async def sync_from_supabase_table(table_name: str = "esp32_telemetry", batch_si
     except Exception as e:
         print(f"[Supabase Sync Error]: {e}")
         return 0
+
+def push_telemetry_to_supabase(data: Dict[str, Any], table_name: str = "esp32_telemetry") -> bool:
+    """
+    Directly uploads a telemetry packet to the live Supabase project table.
+    """
+    client = get_supabase_client()
+    if not client:
+        return False
+    try:
+        payload = {
+            "device_id": data.get("device_id", "AGRITRACE-001"),
+            "shipment_id": data.get("shipment_id"),
+            "sequence": data.get("sequence", 1),
+            "temperature": float(data.get("temperature", 4.0)),
+            "humidity": float(data.get("humidity", 78.0)),
+            "gas_ethylene": float(data.get("gas_ethylene", 12.0)),
+            "latitude": float(data.get("latitude", 19.0760)),
+            "longitude": float(data.get("longitude", 72.9982)),
+            "battery": float(data.get("battery", 95.0)),
+            "solar_power_mw": float(data.get("solar_power_mw", 320.0)),
+            "network_state": data.get("network_state", "online"),
+            "sync_state": data.get("sync_state", "live"),
+            "integrity_status": data.get("integrity_status", "verified"),
+            "synced_to_local": True
+        }
+        res = client.table(table_name).insert(payload).execute()
+        return bool(res.data)
+    except Exception as e:
+        print(f"[Supabase Push Error]: {e}")
+        return False
+

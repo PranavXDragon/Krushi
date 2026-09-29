@@ -18,7 +18,12 @@ from models import (
 )
 from crypto_engine import CryptoEngine
 from simulator import simulator_instance, IoTSimulator
-from supabase_sync import process_and_save_telemetry, sync_from_supabase_table, get_supabase_client
+from supabase_sync import (
+    process_and_save_telemetry,
+    sync_from_supabase_table,
+    get_supabase_client,
+    push_telemetry_to_supabase
+)
 
 app = FastAPI(
     title="Krushi API",
@@ -569,6 +574,26 @@ async def secure_telemetry_ingest(
         }
     })
 
+    # Asynchronously push to Supabase table
+    try:
+        push_telemetry_to_supabase({
+            "device_id": record.device_id,
+            "shipment_id": record.shipment_id,
+            "sequence": record.sequence,
+            "temperature": record.temperature,
+            "humidity": record.humidity,
+            "gas_ethylene": record.gas_ethylene,
+            "latitude": record.latitude,
+            "longitude": record.longitude,
+            "battery": record.battery,
+            "solar_power_mw": record.solar_power_mw,
+            "network_state": record.network_state,
+            "sync_state": record.sync_state,
+            "integrity_status": record.integrity_status
+        })
+    except Exception as e:
+        print(f"[Supabase Ingest Push Error]: {e}")
+
     return {
         "status": "verified",
         "sequence": record.sequence,
@@ -816,6 +841,10 @@ async def trigger_sim_tick():
     result = simulator_instance.tick()
     if result["action"] == "ingested_live":
         await broadcast_telemetry({"type": "NEW_TELEMETRY", "data": result["record"]})
+        try:
+            push_telemetry_to_supabase(result["record"])
+        except Exception as e:
+            print(f"[Supabase Sim Push Error]: {e}")
     return result
 
 @app.post("/api/v1/simulation/network-toggle")

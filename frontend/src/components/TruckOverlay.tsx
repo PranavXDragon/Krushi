@@ -260,10 +260,7 @@ export const TruckOverlay: React.FC<TruckOverlayProps> = ({
             </div>
           </div>
 
-          {/* High-Tech Road Dock Pad & Contact Shadow */}
-          <div className="w-full -mt-2 h-2 rounded-full bg-gradient-to-r from-transparent via-slate-300/80 to-transparent flex items-center justify-center">
-            <div className="w-3/4 h-[1px] bg-gradient-to-r from-transparent via-teal-500/40 to-transparent" />
-          </div>
+
 
         </div>
 

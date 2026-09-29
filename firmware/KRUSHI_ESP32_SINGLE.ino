@@ -1,16 +1,3 @@
-/*
- * ==============================================================================
- * KRUSHI - Single File, Ultra-Lightweight ESP32 Cold-Chain Node
- * Project: hccppqykmjfcpjmhntks.supabase.co
- * 
- * Features:
- * - 100% Single File: No extra .h or .cpp files needed!
- * - Zero External Libraries: Uses standard built-in ESP32 WiFi & HTTPClient
- * - Zero Heap Fragmentation: Uses a fixed stack buffer (No RAM leaks)
- * - Automatic WiFi Reconnect & Error Recovery
- * ==============================================================================
- */
-
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>

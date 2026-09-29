@@ -8,6 +8,9 @@ import { TraceabilityView } from './components/TraceabilityView';
 import { AlertsView } from './components/AlertsView';
 import { AnalyticsView } from './components/AnalyticsView';
 import { ShipmentsView } from './components/ShipmentsView';
+import { CreateShipmentView } from './components/CreateShipmentView';
+import { TransitHistoryView } from './components/TransitHistoryView';
+import { DevicesView } from './components/DevicesView';
 import { ConsumerVerifyView } from './components/ConsumerVerifyView';
 import { api } from './services/api';
 import { Shipment, Device, TelemetryRecord, Alert, ShipmentEvent, VerificationResult, AnalyticsData } from './types';
@@ -150,9 +153,15 @@ export function App() {
         return { title: 'Freshness & Quality Analytics', subtitle: 'Safe transit records and cold-chain compliance scorecards' };
       case 'shipments':
       case 'active-shipments':
+        return { title: 'Active Crop Shipments', subtitle: 'Live transit manifests, reefer truck conditions, and mandi routes' };
       case 'create-shipment':
+        return { title: 'Create Crop Shipment', subtitle: 'Register fresh farm produce, safe cold-chain tripwires, and bind IoT hardware' };
       case 'shipment-history':
-        return { title: 'Crop Shipments & Logistics', subtitle: 'Active vehicle manifests, driver details, and destination mandis' };
+        return { title: 'Cold-Chain Transit History', subtitle: 'Immutable audit logs, verified trip manifests, and GI compliance grades' };
+      case 'devices':
+      case 'device-list':
+      case 'assign-device':
+        return { title: 'IoT Hardware Nodes & Fleet', subtitle: '4G LTE-M edge nodes, LiFePO4 battery health, solar telemetry, and cryptographic verification' };
       case 'consumer-view':
         return { title: 'Consumer Freshness Certificate', subtitle: 'Public transparency certificate to verify GI-tag authenticity and cold-chain safety' };
       default:
@@ -246,7 +255,7 @@ export function App() {
               <AnalyticsView analytics={analytics} />
             )}
 
-            {(activeTab === 'shipments' || activeTab === 'active-shipments' || activeTab === 'create-shipment' || activeTab === 'shipment-history' || activeTab === 'devices' || activeTab === 'device-list' || activeTab === 'assign-device') && (
+            {(activeTab === 'shipments' || activeTab === 'active-shipments') && (
               <ShipmentsView
                 shipments={shipments}
                 devices={devices}
@@ -254,6 +263,38 @@ export function App() {
                   setSelectedShipmentId(id);
                   setActiveTab('monitoring');
                 }}
+                onRefresh={loadData}
+                onShowToast={showToast}
+              />
+            )}
+
+            {activeTab === 'create-shipment' && (
+              <CreateShipmentView
+                devices={devices}
+                onShipmentCreated={(newId) => {
+                  setSelectedShipmentId(newId);
+                  loadData();
+                  setActiveTab('monitoring');
+                }}
+                onShowToast={showToast}
+              />
+            )}
+
+            {activeTab === 'shipment-history' && (
+              <TransitHistoryView
+                shipments={shipments}
+                onSelectShipment={(id) => {
+                  setSelectedShipmentId(id);
+                  setActiveTab('monitoring');
+                }}
+                onShowToast={showToast}
+              />
+            )}
+
+            {(activeTab === 'devices' || activeTab === 'device-list' || activeTab === 'assign-device') && (
+              <DevicesView
+                devices={devices}
+                shipments={shipments}
                 onRefresh={loadData}
                 onShowToast={showToast}
               />

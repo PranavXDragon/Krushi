@@ -49,3 +49,9 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# Secrets and environment variables
+.env
+*.env
+backend/.env
+frontend/.env

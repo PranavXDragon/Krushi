@@ -19,13 +19,14 @@ const char* WIFI_SSID     = "YOUR_WIFI_SSID";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 
 // 2. Gateway API Configuration
-// Post to Krushi Authenticated Ingestion Gateway
-const char* GATEWAY_INGEST_URL = "https://your-api-domain.com/api/v1/telemetry/secure-ingest";
+// For local testing: "http://<YOUR_COMPUTER_LOCAL_IP>:8000/api/v1/telemetry/secure-ingest"
+// For cloud production: "https://your-api-domain.com/api/v1/telemetry/secure-ingest"
+const char* GATEWAY_INGEST_URL = "http://192.168.1.100:8000/api/v1/telemetry/secure-ingest";
 
-// 3. Node Cryptographic Identity (SECP256k1)
-// In production, private keys are permanently fused in ATECC608A secure element or encrypted NVS
+// 3. Node Cryptographic Identity & Scoped Credential Token
 const char* DEVICE_ID = "AGRITRACE-001";
 const char* SHIPMENT_ID = "04beaccb-7c55-44ab-aa84-2a3f338dcf1c";
+const char* DEVICE_AUTH_TOKEN = "krushi_tok_agritrace_001_sec2026";
 const char* DEVICE_PRIVATE_KEY_HEX = "db4a376e129ffd9f586229b01f32d7dfc477e9c8a59c9749e96f7fff77339615";
 
 // Root CA Certificate for TLS Pinning (e.g. Let's Encrypt ISRG Root X1)
@@ -116,16 +117,26 @@ void loop() {
 }
 
 void sendAuthenticatedTelemetry() {
-  WiFiClientSecure client;
-  client.setCACert(ROOT_CA_CERT); // TLS Certificate Validation
-
   HTTPClient http;
-  if (!http.begin(client, GATEWAY_INGEST_URL)) {
-    Serial.println("[HTTP] Connection failed to gateway");
-    return;
+  bool isHttps = (strncmp(GATEWAY_INGEST_URL, "https://", 8) == 0);
+
+  if (isHttps) {
+    WiFiClientSecure client;
+    client.setCACert(ROOT_CA_CERT); // TLS Certificate Validation
+    if (!http.begin(client, GATEWAY_INGEST_URL)) {
+      Serial.println("[HTTP] Connection failed to secure gateway");
+      return;
+    }
+  } else {
+    WiFiClient client;
+    if (!http.begin(client, GATEWAY_INGEST_URL)) {
+      Serial.println("[HTTP] Connection failed to local gateway");
+      return;
+    }
   }
 
   http.addHeader("Content-Type", "application/json");
+  http.addHeader("X-Device-Token", DEVICE_AUTH_TOKEN);
 
   // Calibrated sensor reading simulation
   float temp = 4.2 + (random(-15, 25) / 100.0);
@@ -170,6 +181,7 @@ void sendAuthenticatedTelemetry() {
   doc["previous_hash"]  = lastRecordHash;
   doc["record_hash"]    = recordHash;
   doc["signature"]      = signature;
+  doc["device_token"]   = DEVICE_AUTH_TOKEN;
 
   String requestBody;
   serializeJson(doc, requestBody);

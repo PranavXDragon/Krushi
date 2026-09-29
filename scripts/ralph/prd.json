@@ -1,0 +1,44 @@
+[
+  {
+    "id": "STORY-001",
+    "title": "Establish Project Documentation & Data Format Specification",
+    "description": "Create root .gitignore, comprehensive README.md, System Requirements Specification, Project Plan, and Data Format Specification for SIH26232.",
+    "priority": 1,
+    "passes": true
+  },
+  {
+    "id": "STORY-002",
+    "title": "Offline-First Telemetry Engine with Monotonic Sequence Counters",
+    "description": "Ensure telemetry records preserve monotonic sequence numbers and can be queued offline and batch-synced upon cellular reconnection.",
+    "priority": 2,
+    "passes": true
+  },
+  {
+    "id": "STORY-003",
+    "title": "Cryptographic Hash Chaining and Tamper Audit Verification",
+    "description": "Implement canonical serialization, recursive SHA-256 chaining, and instant audit verification for bit-level database tampering.",
+    "priority": 3,
+    "passes": true
+  },
+  {
+    "id": "STORY-004",
+    "title": "Decentralized Ledger Merkle Tree Rollup & Anchoring",
+    "description": "Batch telemetry hashes into binary Merkle trees and anchor the root to smart contracts on Polygon zkEVM / AgriChain testnet.",
+    "priority": 4,
+    "passes": true
+  },
+  {
+    "id": "STORY-005",
+    "title": "Truck-Centric Multi-Compartment Visualization & Live Environmental Telemetry",
+    "description": "Provide a real-time web dashboard displaying temperature, humidity, ethylene gas, solar harvesting, and compartment overlays.",
+    "priority": 5,
+    "passes": true
+  },
+  {
+    "id": "STORY-006",
+    "title": "Consumer Provenance QR Code Generation & Transparency Portal",
+    "description": "Generate verifiable QR codes linking to farm-to-fork origin certificates with GI-tag details and cold-chain compliance scores.",
+    "priority": 6,
+    "passes": true
+  }
+]

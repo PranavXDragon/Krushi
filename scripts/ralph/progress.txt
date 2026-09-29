@@ -1,0 +1,24 @@
+# Codebase Patterns
+- Backend: FastAPI + SQLAlchemy SQLite + WebSocket at /ws/telemetry.
+- Cryptography: SHA-256 recursive chaining (CryptoEngine), canonical JSON key sorting.
+- Offline-First: Monotonic sequence increment (Seq_i = Seq_{i-1} + 1) with local queuing and idempotent MQTT burst ingestion.
+- Frontend: React 19 + TypeScript + Vite + Tailwind CSS + Lucide + Recharts.
+- Visualization: Multi-compartment reefer truck mapping in TruckOverlay.tsx.
+
+## 2026-09-29 - STORY-001 - Project Documentation & System Specification
+- What was implemented:
+  - Formulated comprehensive project documentation including DATA_FORMAT_SPEC.md, PROJECT_PLAN.md, REQUIREMENTS_SPECIFICATION.md, ARCHITECTURE_AND_EVALUATION_GUIDE.md, and primary README.md.
+  - Initialized Ralph tracking with prd.json and progress.txt.
+  - Connected repository to GitHub (PranavXDragon/SIHP2).
+- Files changed:
+  - docs/DATA_FORMAT_SPEC.md
+  - docs/PROJECT_PLAN.md
+  - docs/REQUIREMENTS_SPECIFICATION.md
+  - docs/ARCHITECTURE_AND_EVALUATION_GUIDE.md
+  - scripts/ralph/prd.json
+  - scripts/ralph/progress.txt
+  - README.md
+  - .gitignore
+- **Learnings:**
+  - Standardized JSON canonical serialization eliminates cross-platform hashing discrepancies between Python backend and edge C/C++ firmware.
+  - Merkle Tree rollup is essential to prevent high gas costs on EVM networks when logging high-frequency IoT data.

@@ -43,9 +43,8 @@ app.add_middleware(
 connected_websockets: List[WebSocket] = []
 
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     init_db()
-    # Import seed if needed
     from seed_data import seed_database
     db = SessionLocal()
     try:
@@ -54,6 +53,20 @@ def on_startup():
             seed_database()
     finally:
         db.close()
+
+    # Continuous background worker pulling real ESP32 telemetry from Supabase
+    async def supabase_auto_syncer():
+        while True:
+            try:
+                synced_count = await sync_from_supabase_table()
+                if synced_count > 0:
+                    await broadcast_telemetry({"type": "SUPABASE_BATCH_SYNC", "count": synced_count})
+            except Exception as e:
+                pass
+            await asyncio.sleep(3)
+
+    import asyncio
+    asyncio.create_task(supabase_auto_syncer())
 
 # Broadcast helper for WebSocket
 async def broadcast_telemetry(payload: Dict[str, Any]):

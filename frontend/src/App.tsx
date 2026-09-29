@@ -303,7 +303,9 @@ export function App() {
             {activeTab === 'consumer-view' && (
               <ConsumerVerifyView
                 shipment={activeShipment}
+                shipments={shipments}
                 verification={verification}
+                onSelectShipment={(id) => setSelectedShipmentId(id)}
                 onBackToDashboard={() => setActiveTab('dashboard')}
               />
             )}

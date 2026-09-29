@@ -1,5 +1,19 @@
 #pragma once
+#if defined(ARDUINO) || defined(ESP32)
 #include <Arduino.h>
+#elif defined(__cplusplus)
+#include <string>
+#include <cstdint>
+#include <iostream>
+#include <cstdio>
+using String = std::string;
+struct SerialFallback {
+  template<typename T> void println(const T& msg) { std::cout << msg << std::endl; }
+  void println() { std::cout << std::endl; }
+  template<typename... Args> void printf(const char* fmt, Args... args) { ::printf(fmt, args...); }
+};
+static SerialFallback Serial;
+#endif
 
 enum class NetworkStatus {
   DISCONNECTED,

@@ -1,7 +1,7 @@
 #pragma once
-#ifdef ARDUINO
+#if defined(ARDUINO) || defined(ESP32)
 #include <Arduino.h>
-#else
+#elif defined(__cplusplus)
 #include <string>
 #include <cstdint>
 #include <iostream>

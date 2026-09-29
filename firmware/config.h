@@ -1,5 +1,11 @@
 #pragma once
+#if defined(ARDUINO) || defined(ESP32)
 #include <Arduino.h>
+#elif defined(__cplusplus)
+#include <string>
+#include <cstdint>
+using String = std::string;
+#endif
 
 #define CLOUD_ENABLED 1
 

@@ -1,12 +1,14 @@
 #pragma once
-#ifdef ARDUINO
+#if defined(ARDUINO) || defined(ESP32)
 #include <Arduino.h>
-#else
+#include <vector>
+#elif defined(__cplusplus)
 #include <string>
+#include <vector>
 #include <cstdint>
 using String = std::string;
 #endif
-#include <vector>
+
 
 // Forward declarations
 class StorageManager;

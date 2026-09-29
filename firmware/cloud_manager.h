@@ -1,6 +1,13 @@
 #pragma once
+#if defined(ARDUINO) || defined(ESP32)
 #include <Arduino.h>
 #include <vector>
+#elif defined(__cplusplus)
+#include <string>
+#include <vector>
+#include <cstdint>
+using String = std::string;
+#endif
 
 class StorageManager;
 class NetworkManager;

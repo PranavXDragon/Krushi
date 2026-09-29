@@ -143,27 +143,29 @@ export const SimulationBar: React.FC<SimulationBarProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border-b border-slate-800 text-white px-4 py-2.5 shadow-md sticky top-0 z-40">
+    <div className="bg-white border-b border-slate-200 text-slate-800 px-4 py-2.5 shadow-xs sticky top-0 z-40">
       <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
         
-        {/* Left: SIH Simulation Label & Status */}
+        {/* Left: Simulation Label & Status */}
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-500/20 text-teal-300 font-semibold border border-teal-500/30">
-            <Radio className="w-3.5 h-3.5 animate-pulse" />
-            <span>SIH26232 SIMULATION LAB</span>
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
+            <Radio className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+            <span>SIH26232 IoT SIMULATOR</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-medium ${
-              isOnline ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold border ${
+              isOnline 
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                : 'bg-amber-50 text-amber-700 border-amber-300'
             }`}>
-              <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-amber-400 animate-ping'}`} />
-              {isOnline ? 'NODE: ONLINE' : 'NODE: OFFLINE (QUEUEING)'}
+              <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500 animate-ping'}`} />
+              {isOnline ? 'Node Online' : 'Node Offline (Queuing)'}
             </span>
 
             {queuedCount > 0 && (
-              <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded font-mono font-bold">
-                {queuedCount} Queued Records
+              <span className="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded-full font-mono font-bold">
+                {queuedCount} Queued in Flash
               </span>
             )}
           </div>
@@ -175,10 +177,10 @@ export const SimulationBar: React.FC<SimulationBarProps> = ({
           <button
             onClick={handleTick}
             disabled={loadingAction !== null}
-            className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition font-medium cursor-pointer shadow-2xs"
             title="Generate next sequential telemetry sample"
           >
-            <Play className="w-3 h-3 text-teal-400" />
+            <Play className="w-3.5 h-3.5 text-emerald-600" />
             <span>Emit Reading</span>
           </button>
 
@@ -187,91 +189,82 @@ export const SimulationBar: React.FC<SimulationBarProps> = ({
             <button
               onClick={() => handleToggleNetwork(false)}
               disabled={loadingAction !== null}
-              className="flex items-center gap-1 px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition font-medium"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition font-semibold cursor-pointer shadow-2xs"
               title="Simulate network loss (blindspot) and start local offline queue"
             >
-              <WifiOff className="w-3 h-3" />
+              <WifiOff className="w-3.5 h-3.5 text-amber-600" />
               <span>Simulate Offline</span>
             </button>
           ) : (
             <button
               onClick={() => handleToggleNetwork(true)}
               disabled={loadingAction !== null}
-              className="flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition font-medium"
-              title="Restore network connection"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition font-semibold cursor-pointer shadow-2xs"
+              title="Restore network connectivity"
             >
-              <Wifi className="w-3 h-3" />
-              <span>Reconnect Network</span>
+              <Wifi className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Go Online</span>
             </button>
           )}
 
-          {/* Step 3: MQTT Batch Sync */}
+          {/* Step 3: MQTT Burst Sync */}
           <button
             onClick={handleBatchSync}
             disabled={loadingAction !== null || queuedCount === 0}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded border transition font-medium ${
-              queuedCount > 0
-                ? 'bg-blue-600 hover:bg-blue-500 text-white border-blue-400 animate-pulse'
-                : 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold transition border shadow-2xs ${
+              queuedCount > 0 
+                ? 'bg-blue-600 hover:bg-blue-500 text-white border-blue-600 cursor-pointer animate-pulse' 
+                : 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed'
             }`}
-            title="Flush queued offline telemetry over MQTT with sequence validation"
+            title="Burst transmit all locally buffered records from edge flash"
           >
-            <RefreshCw className="w-3 h-3" />
-            <span>MQTT Batch Sync ({queuedCount})</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${loadingAction === 'sync' ? 'animate-spin' : ''}`} />
+            <span>Burst Sync ({queuedCount})</span>
           </button>
 
-          {/* Step 4: Excursion Injections */}
+          {/* Step 4: Spoilage Injections */}
           <button
             onClick={handleGasSpike}
             disabled={loadingAction !== null}
-            className="flex items-center gap-1 px-2 py-1 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition"
-            title="Simulate Ethylene / Spoilage gas surge"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition font-medium cursor-pointer shadow-2xs"
+            title="Inject premature fruit ripening ethylene burst (> 50 ppm)"
           >
-            <Flame className="w-3 h-3" />
+            <Flame className="w-3.5 h-3.5 text-rose-600" />
             <span>Gas Spike</span>
           </button>
 
           <button
             onClick={handleTempSpike}
             disabled={loadingAction !== null}
-            className="flex items-center gap-1 px-2 py-1 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 transition"
-            title="Simulate Cold Chain failure (> 28°C)"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition font-medium cursor-pointer shadow-2xs"
+            title="Inject refrigeration failure temperature spike (> 28°C)"
           >
-            <Thermometer className="w-3 h-3" />
+            <Thermometer className="w-3.5 h-3.5 text-rose-600" />
             <span>Temp Spike</span>
           </button>
 
-          <button
-            onClick={handleTamper}
-            disabled={loadingAction !== null}
-            className="flex items-center gap-1 px-2 py-1 rounded bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border border-orange-500/40 transition"
-            title="Simulate box lid switch opened"
-          >
-            <Lock className="w-3 h-3" />
-            <span>Tamper Box</span>
-          </button>
-
-          {/* Step 5: Blockchain Anchor */}
-          <button
-            onClick={handleBlockchainAnchor}
-            disabled={loadingAction !== null}
-            className="flex items-center gap-1 px-2.5 py-1 rounded bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 transition font-medium"
-            title="Anchor Merkle Root of current batch to Polygon zkEVM"
-          >
-            <Database className="w-3 h-3" />
-            <span>Anchor zkEVM</span>
-          </button>
-
-          {/* Step 6: Test Tamper Detection */}
+          {/* Step 5: Cryptographic Tampering */}
           <button
             onClick={handleCorruptHash}
             disabled={loadingAction !== null}
-            className="flex items-center gap-1 px-2 py-1 rounded bg-red-950/60 hover:bg-red-900/60 text-red-300 border border-red-700/60 transition"
-            title="Corrupt hash in DB to demonstrate tamper detection in Verification tab"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 transition font-medium cursor-pointer shadow-2xs"
+            title="Deliberately corrupt database record hash to demonstrate cryptographic fraud detection"
           >
-            <ShieldAlert className="w-3 h-3" />
-            <span>Test Tamper Audit</span>
+            <ShieldAlert className="w-3.5 h-3.5 text-purple-600" />
+            <span>Corrupt Hash</span>
           </button>
+
+          {/* Step 6: Anchor to Ledger */}
+          <button
+            onClick={handleBlockchainAnchor}
+            disabled={loadingAction !== null}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-semibold transition cursor-pointer shadow-xs"
+            title="Derive Merkle root and anchor telemetry batch to Polygon zkEVM"
+          >
+            <Database className="w-3.5 h-3.5 text-emerald-200" />
+            <span>Anchor Proof</span>
+          </button>
+
         </div>
 
       </div>

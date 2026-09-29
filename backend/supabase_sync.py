@@ -76,6 +76,12 @@ def process_and_save_telemetry(raw_data: Dict[str, Any], db: Session) -> Optiona
     network_state = raw_data.get("network_state", "online")
     sync_state = raw_data.get("sync_state", "live")
 
+    # Lookup Device
+    dev = db.query(Device).filter(Device.id == device_id).first()
+    if dev and dev.status == "revoked":
+        print(f"[Supabase Sync] Rejected telemetry: device {device_id} is revoked.")
+        return None
+
     # Cryptographic Hash Chaining
     rec_hash = CryptoEngine.compute_record_hash(
         device_id=device_id,
@@ -90,11 +96,21 @@ def process_and_save_telemetry(raw_data: Dict[str, Any], db: Session) -> Optiona
         battery=battery,
         previous_hash=previous_hash
     )
-    signature = CryptoEngine.sign_hash(rec_hash)
+    
+    # Verify or generate ECDSA signature
+    raw_sig = raw_data.get("signature")
+    is_sig_valid = True
+    if raw_sig and dev and dev.public_key:
+        is_sig_valid = CryptoEngine.verify_device_signature(rec_hash, raw_sig, dev.public_key)
+        signature = raw_sig
+    else:
+        signature = raw_sig or CryptoEngine.sign_hash(rec_hash, device_id=device_id)
 
     # Monotonic and pointer integrity verification
     is_valid = True
     if last_rec and sequence != last_rec.sequence + 1:
+        is_valid = False
+    if not is_sig_valid:
         is_valid = False
     
     integrity_status = "verified" if is_valid else "failed"

@@ -21,8 +21,8 @@ from simulator import simulator_instance, IoTSimulator
 from supabase_sync import process_and_save_telemetry, sync_from_supabase_table, get_supabase_client
 
 app = FastAPI(
-    title="AgriTrace API",
-    description="Offline-First IoT & Blockchain-Enabled Farm-to-Fork Traceability (SIH26232)",
+    title="Krushi API",
+    description="Krushi — Offline-First IoT & Blockchain-Enabled Farm-to-Fork Traceability (SIH26232)",
     version="1.0.0"
 )
 
@@ -83,13 +83,31 @@ class ShipmentCreateSchema(BaseModel):
 class AlertUpdateSchema(BaseModel):
     status: str # ACKNOWLEDGED or RESOLVED
 
+class SecureTelemetryIngestSchema(BaseModel):
+    device_id: str
+    shipment_id: Optional[str] = None
+    sequence: int
+    timestamp: Optional[str] = None
+    temperature: float
+    humidity: float
+    gas_ethylene: float
+    latitude: Optional[float] = 19.0760
+    longitude: Optional[float] = 72.9982
+    battery: Optional[float] = 94.5
+    solar_power_mw: Optional[float] = 320.0
+    network_state: Optional[str] = "online"
+    sync_state: Optional[str] = "live"
+    previous_hash: Optional[str] = None
+    record_hash: str
+    signature: str
+
 # ================= REST ENDPOINTS =================
 
 @app.get("/api/v1/health")
 def health_check():
     return {
         "status": "online",
-        "service": "AgriTrace Backend",
+        "service": "Krushi Backend",
         "timestamp": datetime.utcnow().isoformat(),
         "sih_ps": "SIH26232 - Ministry of Food Processing Industries"
     }
@@ -337,6 +355,225 @@ async def trigger_supabase_sync():
     count = await sync_from_supabase_table()
     return {"status": "success", "synced_count": count}
 
+# 3.2 SECURE EDGE INGESTION WITH ECDSA VERIFICATION & REPLAY PROTECTION
+@app.post("/api/v1/telemetry/secure-ingest")
+async def secure_telemetry_ingest(payload: SecureTelemetryIngestSchema, db: Session = Depends(get_db)):
+    """
+    Cryptographically Authenticated Telemetry Ingestion Endpoint.
+    1. Authenticates device identity and checks revocation status.
+    2. Enforces monotonic sequence numbers & prevents replay attacks.
+    3. Recomputes canonical RFC 8785 SHA-256 digest to detect sensor mutation in transit.
+    4. Validates ECDSA (secp256k1) digital signature with device's registered public key.
+    5. Checks environmental thresholds and logs excursions.
+    6. Broadcasts to operations dashboard in real-time.
+    """
+    # 1. Device identity & revocation check
+    dev = db.query(Device).filter(Device.id == payload.device_id).first()
+    if not dev:
+        raise HTTPException(
+            status_code=401,
+            detail=f"Device '{payload.device_id}' is not registered in KRUSHI registry. Ingestion unauthorized."
+        )
+    if dev.status == "revoked":
+        raise HTTPException(
+            status_code=403,
+            detail=f"Device '{payload.device_id}' credential has been revoked. Ingestion rejected."
+        )
+
+    # 2. Resolve active shipment
+    shipment_id = payload.shipment_id or dev.current_shipment_id
+    if not shipment_id:
+        active_shipment = db.query(Shipment).filter(
+            Shipment.device_id == payload.device_id,
+            Shipment.status == "IN_TRANSIT"
+        ).first()
+        if not active_shipment:
+            active_shipment = db.query(Shipment).first()
+        if active_shipment:
+            shipment_id = active_shipment.id
+
+    shipment = db.query(Shipment).filter(Shipment.id == shipment_id).first() if shipment_id else None
+
+    # 3. Monotonic sequence & replay protection
+    last_rec = db.query(TelemetryRecord).filter(
+        TelemetryRecord.device_id == payload.device_id
+    ).order_by(TelemetryRecord.sequence.desc()).first()
+
+    expected_prev = last_rec.record_hash if last_rec else "GENESIS_ROOT_000000000000000000000000000000000000000000000000000000000000"
+    
+    # Check if duplicate sequence
+    existing = db.query(TelemetryRecord).filter(
+        TelemetryRecord.device_id == payload.device_id,
+        TelemetryRecord.sequence == payload.sequence
+    ).first()
+    if existing:
+        if existing.record_hash.lower().replace("0x", "") == payload.record_hash.lower().replace("0x", ""):
+            return {
+                "status": "duplicate_idempotent",
+                "sequence": payload.sequence,
+                "record_hash": payload.record_hash,
+                "integrity_status": "verified",
+                "message": "Telemetry packet already processed (idempotent reply)"
+            }
+        else:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Replay attack / sequence collision detected at sequence #{payload.sequence}."
+            )
+
+    prev_hash_to_use = payload.previous_hash or expected_prev
+    timestamp_val = payload.timestamp or datetime.utcnow().isoformat()
+
+    # 4. Canonical Hash Recalculation (detects modified temperature or sensor values)
+    recalculated_hash = CryptoEngine.compute_record_hash(
+        device_id=payload.device_id,
+        shipment_id=shipment_id or "default-shipment",
+        sequence=payload.sequence,
+        timestamp_str=timestamp_val,
+        temperature=payload.temperature,
+        humidity=payload.humidity,
+        gas_ethylene=payload.gas_ethylene,
+        latitude=payload.latitude or 19.0760,
+        longitude=payload.longitude or 72.9982,
+        battery=payload.battery or 94.5,
+        previous_hash=prev_hash_to_use
+    )
+
+    clean_payload_hash = payload.record_hash.lower().replace("0x", "")
+    if recalculated_hash.lower() != clean_payload_hash:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Sensor data modification detected! Recalculated SHA-256 digest ({recalculated_hash}) does not match submitted record_hash ({payload.record_hash}). Telemetry modified in transit."
+        )
+
+    # 5. Cryptographic Signature Verification (rejects forged signatures)
+    is_sig_valid = CryptoEngine.verify_device_signature(
+        record_hash=recalculated_hash,
+        signature=payload.signature,
+        public_key_hex=dev.public_key
+    )
+    if not is_sig_valid:
+        raise HTTPException(
+            status_code=401,
+            detail=f"Cryptographic signature verification failed for device '{payload.device_id}'. The ECDSA signature is invalid or forged."
+        )
+
+    # 6. Save verified record
+    ts_obj = datetime.utcnow()
+    if timestamp_val and "T" in timestamp_val:
+        try:
+            ts_obj = datetime.fromisoformat(timestamp_val)
+        except Exception:
+            pass
+
+    record = TelemetryRecord(
+        device_id=payload.device_id,
+        shipment_id=shipment_id,
+        sequence=payload.sequence,
+        timestamp=ts_obj,
+        temperature=payload.temperature,
+        humidity=payload.humidity,
+        gas_ethylene=payload.gas_ethylene,
+        latitude=payload.latitude or 19.0760,
+        longitude=payload.longitude or 72.9982,
+        battery=payload.battery or 94.5,
+        solar_power_mw=payload.solar_power_mw or 320.0,
+        network_state=payload.network_state or "online",
+        sync_state=payload.sync_state or "live",
+        previous_hash=prev_hash_to_use,
+        record_hash=recalculated_hash,
+        signature=payload.signature,
+        integrity_status="verified"
+    )
+    db.add(record)
+
+    # 7. Check excursions & alerts
+    if shipment:
+        max_t = shipment.max_temp or 8.0
+        min_t = shipment.min_temp or 2.0
+        max_g = shipment.max_gas_ethylene or 50.0
+        if payload.temperature > max_t:
+            db.add(Alert(
+                shipment_id=shipment.id,
+                device_id=payload.device_id,
+                alert_type="HIGH_TEMP",
+                severity="CRITICAL",
+                title=f"High Temperature Excursion ({payload.temperature}°C)",
+                message=f"Reefer temperature of {payload.temperature}°C exceeded maximum safety threshold of {max_t}°C.",
+                observed_value=f"{payload.temperature}°C",
+                threshold_value=f"{max_t}°C",
+                status="OPEN"
+            ))
+        elif payload.gas_ethylene > max_g:
+            db.add(Alert(
+                shipment_id=shipment.id,
+                device_id=payload.device_id,
+                alert_type="GAS_ALERT",
+                severity="CRITICAL",
+                title=f"Ethylene Spoilage Spike ({payload.gas_ethylene} ppm)",
+                message=f"Ethylene gas level reached {payload.gas_ethylene} ppm exceeding safe storage ceiling.",
+                observed_value=f"{payload.gas_ethylene} ppm",
+                threshold_value=f"{max_g} ppm",
+                status="OPEN"
+            ))
+
+    dev.battery_level = payload.battery or dev.battery_level
+    dev.last_seen = datetime.utcnow()
+    db.commit()
+
+    # 8. Broadcast to WebSocket
+    await broadcast_telemetry({
+        "type": "NEW_TELEMETRY",
+        "data": {
+            "id": record.id,
+            "device_id": record.device_id,
+            "shipment_id": record.shipment_id,
+            "sequence": record.sequence,
+            "timestamp": record.timestamp.isoformat() if record.timestamp else None,
+            "temperature": record.temperature,
+            "humidity": record.humidity,
+            "gas_ethylene": record.gas_ethylene,
+            "latitude": record.latitude,
+            "longitude": record.longitude,
+            "battery": record.battery,
+            "solar_power_mw": record.solar_power_mw,
+            "network_state": record.network_state,
+            "sync_state": record.sync_state,
+            "record_hash": record.record_hash,
+            "previous_hash": record.previous_hash,
+            "signature": record.signature,
+            "integrity_status": "verified"
+        }
+    })
+
+    return {
+        "status": "verified",
+        "sequence": record.sequence,
+        "record_hash": record.record_hash,
+        "signature": record.signature,
+        "integrity_status": "verified",
+        "device_id": record.device_id
+    }
+
+# 3.3 DEVICE CREDENTIAL LIFECYCLE (REVOCATION & STATUS)
+@app.post("/api/v1/devices/{device_id}/revoke")
+def revoke_device_credential(device_id: str, db: Session = Depends(get_db)):
+    dev = db.query(Device).filter(Device.id == device_id).first()
+    if not dev:
+        raise HTTPException(status_code=404, detail=f"Device '{device_id}' not found")
+    dev.status = "revoked"
+    db.commit()
+    return {"status": "revoked", "device_id": device_id, "message": "Device key revoked. Further telemetry will be rejected."}
+
+@app.post("/api/v1/devices/{device_id}/activate")
+def activate_device_credential(device_id: str, db: Session = Depends(get_db)):
+    dev = db.query(Device).filter(Device.id == device_id).first()
+    if not dev:
+        raise HTTPException(status_code=404, detail=f"Device '{device_id}' not found")
+    dev.status = "online"
+    db.commit()
+    return {"status": "online", "device_id": device_id, "message": "Device credential re-activated."}
+
 # 4. ALERTS
 @app.get("/api/v1/alerts")
 def get_alerts(status: Optional[str] = None, db: Session = Depends(get_db)):
@@ -420,12 +657,16 @@ def verify_shipment_integrity(shipment_id: str, db: Session = Depends(get_db)):
             "longitude": r.longitude,
             "battery": r.battery,
             "previous_hash": r.previous_hash,
-            "record_hash": r.record_hash
+            "record_hash": r.record_hash,
+            "signature": r.signature
         }
         for r in records
     ]
 
-    is_chain_valid, message, detailed_checks = CryptoEngine.verify_hash_chain(records_payload)
+    devices = db.query(Device).all()
+    device_pubkeys = {d.id: d.public_key for d in devices if d.public_key}
+
+    is_chain_valid, message, detailed_checks = CryptoEngine.verify_hash_chain(records_payload, public_keys=device_pubkeys)
     
     # Merkle Root of current set
     leaf_hashes = [r.record_hash for r in records]

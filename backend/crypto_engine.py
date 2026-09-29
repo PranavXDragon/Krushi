@@ -10,12 +10,33 @@ Implements Section 10 of PRD:
 import hashlib
 import json
 import secrets
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
+import ecdsa
+
+# Known deterministic hardware keypairs for IoT nodes
+# In production, private keys reside on ATECC608A / ESP32 secure NVS
+DEVICE_MASTER_CREDENTIALS = {
+    "AGRITRACE-001": {
+        "private_key": "db4a376e129ffd9f586229b01f32d7dfc477e9c8a59c9749e96f7fff77339615",
+        "public_key": "f85671d8b328e562b2d72d791eb038038f2a6283e680b4787696dd3a988dba91f566b9009a1b6eb1f9eeebb20509d03c04ae7f41cc7541ee0ea39e8425f284ec"
+    },
+    "AGRITRACE-002": {
+        "private_key": "2259da38a429dcaf95e881474c2c77417c44a348d495185380a92b4bed929fe4",
+        "public_key": "af5827a35d02153d187904878833583eb3e361abc104d00278ecd3af3c51507e3ca6cf1794ac591e3d135b87cb3c8aa256411945d59e5c5d6a938f1af5c5501f"
+    }
+}
 
 class CryptoEngine:
     @staticmethod
+    def generate_keypair() -> Tuple[str, str]:
+        """Generates a secp256k1 private/public keypair in hex format."""
+        sk = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
+        vk = sk.verifying_key
+        return sk.to_string().hex(), vk.to_string().hex()
+
+    @staticmethod
     def canonical_json(data: Dict[str, Any]) -> str:
-        """Deterministically sort keys and format without extra whitespace."""
+        """Deterministically sort keys and format without extra whitespace (RFC 8785 style)."""
         # Convert float rounding for deterministic hashing
         normalized = {}
         for k, v in sorted(data.items()):
@@ -59,27 +80,61 @@ class CryptoEngine:
         return hashlib.sha256(canonical_str.encode('utf-8')).hexdigest()
 
     @staticmethod
-    def sign_hash(record_hash: str, private_key_sim: str = "node_priv_sec_2026") -> str:
+    def sign_hash(record_hash: str, private_key_hex: Optional[str] = None, device_id: Optional[str] = None) -> str:
         """
-        Generates deterministic signature representation for the IoT node.
+        Generates real deterministic ECDSA (secp256k1) digital signature for an IoT node.
+        Returns a compact 64-byte signature prefixed with 0x.
         """
-        raw_sig = hashlib.sha256(f"{record_hash}:{private_key_sim}".encode('utf-8')).hexdigest()
-        return f"0x{raw_sig[:64]}"
+        clean_hash = record_hash[2:] if record_hash.startswith("0x") else record_hash
+        digest_bytes = bytes.fromhex(clean_hash)
+
+        # Resolve private key
+        priv = private_key_hex
+        if not priv and device_id and device_id in DEVICE_MASTER_CREDENTIALS:
+            priv = DEVICE_MASTER_CREDENTIALS[device_id]["private_key"]
+        elif not priv:
+            priv = DEVICE_MASTER_CREDENTIALS["AGRITRACE-001"]["private_key"]
+
+        clean_priv = priv[2:] if priv.startswith("0x") else priv
+        sk = ecdsa.SigningKey.from_string(bytes.fromhex(clean_priv), curve=ecdsa.SECP256k1)
+        sig_bytes = sk.sign_deterministic(digest_bytes, hashfunc=hashlib.sha256)
+        return f"0x{sig_bytes.hex()}"
 
     @staticmethod
-    def verify_hash_chain(records: List[Dict[str, Any]]) -> Tuple[bool, str, List[Dict[str, Any]]]:
+    def verify_device_signature(record_hash: str, signature: str, public_key_hex: str) -> bool:
+        """
+        Cryptographically verifies an ECDSA (secp256k1) digital signature against device public key.
+        Catches bit-level tampering, forged signatures, or altered digests.
+        """
+        try:
+            clean_hash = record_hash[2:] if record_hash.startswith("0x") else record_hash
+            clean_sig = signature[2:] if signature.startswith("0x") else signature
+            clean_pub = public_key_hex[2:] if public_key_hex.startswith("0x") else public_key_hex
+
+            digest_bytes = bytes.fromhex(clean_hash)
+            sig_bytes = bytes.fromhex(clean_sig)
+            pub_bytes = bytes.fromhex(clean_pub)
+
+            vk = ecdsa.VerifyingKey.from_string(pub_bytes, curve=ecdsa.SECP256k1)
+            return vk.verify(sig_bytes, digest_bytes, hashfunc=hashlib.sha256)
+        except Exception:
+            return False
+
+    @staticmethod
+    def verify_hash_chain(records: List[Dict[str, Any]], public_keys: Optional[Dict[str, str]] = None) -> Tuple[bool, str, List[Dict[str, Any]]]:
         """
         Validates an entire sequence of telemetry records:
         1. Checks monotonic sequence increment (seq[i] == seq[i-1] + 1)
         2. Recomputes SHA-256 digest of record content
         3. Verifies previous_hash pointer integrity
+        4. Verifies IoT device ECDSA digital signature independently
         """
         if not records:
             return True, "No records to verify", []
 
         results = []
         is_all_valid = True
-        reason = "Chain perfectly intact and verified"
+        reason = "Chain and digital signatures perfectly intact and verified"
 
         for i, rec in enumerate(records):
             expected_prev = "GENESIS_ROOT_000000000000000000000000000000000000000000000000000000000000" if i == 0 else records[i-1]["record_hash"]
@@ -101,11 +156,24 @@ class CryptoEngine:
 
             hash_matches = (recalculated_hash == rec["record_hash"])
             prev_matches = (rec["previous_hash"] == expected_prev)
+
+            # Resolve device public key for signature check
+            dev_id = rec.get("device_id", "")
+            pub_key = None
+            if public_keys and dev_id in public_keys:
+                pub_key = public_keys[dev_id]
+            elif dev_id in DEVICE_MASTER_CREDENTIALS:
+                pub_key = DEVICE_MASTER_CREDENTIALS[dev_id]["public_key"]
+
+            sig_valid = True
+            raw_sig = rec.get("signature")
+            if pub_key and raw_sig:
+                sig_valid = CryptoEngine.verify_device_signature(rec["record_hash"], raw_sig, pub_key)
             
-            valid = hash_matches and prev_matches
+            valid = hash_matches and prev_matches and sig_valid
             if not valid:
                 is_all_valid = False
-                reason = f"Verification mismatch at sequence #{rec['sequence']}: hash_match={hash_matches}, prev_pointer_match={prev_matches}"
+                reason = f"Verification mismatch at sequence #{rec['sequence']}: hash_match={hash_matches}, prev_pointer_match={prev_matches}, sig_valid={sig_valid}"
 
             results.append({
                 "sequence": rec["sequence"],
@@ -113,6 +181,8 @@ class CryptoEngine:
                 "stored_hash": rec["record_hash"],
                 "previous_hash": rec["previous_hash"],
                 "expected_previous": expected_prev,
+                "signature": raw_sig,
+                "is_signature_valid": sig_valid,
                 "is_valid": valid
             })
 

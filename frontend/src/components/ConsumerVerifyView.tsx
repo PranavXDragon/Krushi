@@ -48,7 +48,7 @@ export const ConsumerVerifyView: React.FC<ConsumerVerifyViewProps> = ({
               <Sprout className="w-7 h-7" />
             </div>
             <div>
-              <h2 className="text-xl font-extrabold text-slate-800 font-['Outfit']">AgriTrace Verified</h2>
+              <h2 className="text-xl font-extrabold text-slate-800 font-['Outfit']">Krushi Verified</h2>
               <p className="text-[11px] text-teal-600 font-semibold tracking-wider uppercase">MoFPI Decentralized Trust Certificate</p>
             </div>
           </div>
@@ -118,7 +118,7 @@ export const ConsumerVerifyView: React.FC<ConsumerVerifyViewProps> = ({
 
         <div className="mt-8 pt-6 border-t border-slate-100 text-center">
           <p className="text-[11px] text-slate-400">
-            Verified autonomously by AgriTrace Offline-First Node #{shipment.device_id || 'AGRITRACE-001'} with tamper-evident cryptographic hash chaining.
+            Verified autonomously by Krushi Offline-First Node #{shipment.device_id || 'KRUSHI-001'} with tamper-evident cryptographic hash chaining.
           </p>
         </div>
 

@@ -139,31 +139,31 @@ export function App() {
   const getPageInfo = () => {
     switch (activeTab) {
       case 'dashboard':
-        return { title: 'Dashboard', subtitle: 'Fleet & shipment overview, live health, and critical exceptions' };
+        return { title: 'Kisan & Supply Chain Dashboard', subtitle: 'Live cargo condition, truck locations, and harvest freshness status' };
       case 'monitoring':
-        return { title: 'Monitoring', subtitle: 'Live environmental telemetry and truck-centric cold-chain visualization' };
+        return { title: 'Live Cold-Chain Monitoring', subtitle: 'Real-time temperature, humidity, ethylene gas, and truck compartment health' };
       case 'traceability':
-        return { title: 'Traceability', subtitle: 'Farm-to-fork event timeline, cryptographic hash chain, and blockchain proof' };
+        return { title: 'Farm-to-Fork Provenance', subtitle: 'Transparent journey from harvest co-op to market with tamper-proof blockchain proof' };
       case 'alerts':
-        return { title: 'Alerts', subtitle: 'Environmental and device alert center' };
+        return { title: 'Safety & Spoilage Alerts', subtitle: 'Immediate warnings for temperature spikes and spoilage risks' };
       case 'analytics':
-        return { title: 'Analytics', subtitle: 'Performance across your supply chain' };
+        return { title: 'Freshness & Quality Analytics', subtitle: 'Safe transit records and cold-chain compliance scorecards' };
       case 'shipments':
       case 'active-shipments':
       case 'create-shipment':
       case 'shipment-history':
-        return { title: 'Shipments & Devices', subtitle: 'Active manifests, route destinations, and hardware node assignments' };
+        return { title: 'Crop Shipments & Logistics', subtitle: 'Active vehicle manifests, driver details, and destination mandis' };
       case 'consumer-view':
-        return { title: 'Consumer Provenance View', subtitle: 'Public transparency certificate for QR code scans' };
+        return { title: 'Consumer Freshness Certificate', subtitle: 'Public transparency certificate to verify GI-tag authenticity and cold-chain safety' };
       default:
-        return { title: 'AgriTrace Platform', subtitle: 'Offline-First Farm-to-Fork Traceability' };
+        return { title: 'AgriTrace Kisan Portal', subtitle: 'Offline-First Farm-to-Fork Cold-Chain Traceability' };
     }
   };
 
   const pageInfo = getPageInfo();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F4F7FA]">
+    <div className="min-h-screen flex flex-col bg-slate-50">
       
       {/* Interactive SIH Demo Simulation Control Bar */}
       <SimulationBar

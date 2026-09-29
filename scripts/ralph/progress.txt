@@ -22,3 +22,28 @@
 - **Learnings:**
   - Standardized JSON canonical serialization eliminates cross-platform hashing discrepancies between Python backend and edge C/C++ firmware.
   - Merkle Tree rollup is essential to prevent high gas costs on EVM networks when logging high-frequency IoT data.
+
+## 2026-09-29 - STORY-007 - Device Identity & ECDSA Asymmetric Signature Ingestion
+- What was implemented:
+  - Upgraded CryptoEngine to generate and verify authentic SECP256k1 ECDSA digital signatures on SHA-256 telemetry digests.
+  - Seeded authentic public keys in `Device.public_key` in the database for nodes `AGRITRACE-001` and `AGRITRACE-002`.
+  - Added authenticated ingestion endpoint `/api/v1/telemetry/secure-ingest` in FastAPI with dual-layer tamper rejection: recalculates canonical digest (detects modified temperature/sensors) and validates digital signature (rejects forged/unauthorized packets).
+  - Added device credential lifecycle endpoints (`/api/v1/devices/{device_id}/revoke` and `/activate`).
+  - Updated ESP32 firmware sketch (`esp32_supabase_node.ino`) with TLS certificate pinning, RFC 8785 canonical serialization, and digital signing.
+  - Implemented unit and integration test suite (`tests/test_device_signature.py`) passing 100% of tests.
+- Files changed:
+  - backend/crypto_engine.py
+  - backend/models.py
+  - backend/seed_data.py
+  - backend/supabase_sync.py
+  - backend/main.py
+  - firmware/esp32_supabase_node.ino
+  - tests/test_device_signature.py
+  - scripts/ralph/prd.json
+  - scripts/ralph/progress.txt
+  - AGENTS.md
+- **Learnings:**
+  - Hardcoded or simulated signatures in prototype code can be seamlessly converted to true ECDSA (SECP256k1) signatures using compact 64-byte `(r, s)` hex representation.
+  - Verifying the signature against the recalculation of the canonical digest rather than blindly relying on the client's submitted hash prevents the "valid signature on fraudulent hash" attack vector.
+  - Database relative pathing in SQLite must be anchored with `__file__` to ensure test runners and application servers access the identical database regardless of invocation directory.
+

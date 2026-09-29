@@ -38,12 +38,13 @@ def seed_database():
     db.query(Device).delete()
     db.commit()
 
-    # 1. Create Devices
+    # 1. Create Devices with Authentic SECP256k1 Public Keys
+    from crypto_engine import DEVICE_MASTER_CREDENTIALS
     dev1 = Device(
         id="AGRITRACE-001",
         serial_number="NODE-ESP32-S3-88910",
         firmware_version="v2.4.1-sih",
-        public_key="04a8b72f10c8e39d885a12f9e4c27891bcd32087e5fa92",
+        public_key=DEVICE_MASTER_CREDENTIALS["AGRITRACE-001"]["public_key"],
         battery_level=94.5,
         solar_harvesting=True,
         charging_state="harvesting_active (320mW)",
@@ -57,7 +58,7 @@ def seed_database():
         id="AGRITRACE-002",
         serial_number="NODE-ESP32-S3-88911",
         firmware_version="v2.4.1-sih",
-        public_key="04c99e1a78b5432d098f43c11a87e5b290192837bcdef1",
+        public_key=DEVICE_MASTER_CREDENTIALS["AGRITRACE-002"]["public_key"],
         battery_level=88.0,
         solar_harvesting=True,
         charging_state="harvesting_standby",

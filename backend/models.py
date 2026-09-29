@@ -7,10 +7,12 @@ import json
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import create_engine, Column, Integer, Float, String, Boolean, DateTime, Text, ForeignKey, desc
+import os
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from pydantic import BaseModel, Field
 
-DATABASE_URL = "sqlite:///./agritrace.db"
+DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "agritrace.db"))
+DATABASE_URL = f"sqlite:///{DB_PATH}"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

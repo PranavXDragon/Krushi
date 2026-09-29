@@ -40,5 +40,47 @@
     "description": "Generate verifiable QR codes linking to farm-to-fork origin certificates with GI-tag details and cold-chain compliance scores.",
     "priority": 6,
     "passes": true
+  },
+  {
+    "id": "STORY-007",
+    "title": "Device Identity & ECDSA Asymmetric Signature Ingestion",
+    "description": "Implement ECDSA secp256k1 keypair signing on edge payloads, backend public-key validation, and rejection of forged or modified telemetry.",
+    "priority": 7,
+    "passes": true
+  },
+  {
+    "id": "STORY-008",
+    "title": "Supabase RLS Lockdown & Authenticated Ingestion Gateway",
+    "description": "Lock down Supabase direct anon table insertions, route telemetry through authenticated FastAPI gateway with replay detection and token validation.",
+    "priority": 8,
+    "passes": false
+  },
+  {
+    "id": "STORY-009",
+    "title": "Persistent Edge Queue & Telemetry Lifecycle State Machine",
+    "description": "Enforce telemetry record states (received -> verified -> anchored), track sequence gaps in dedicated table, and maintain offline buffer resiliency.",
+    "priority": 9,
+    "passes": false
+  },
+  {
+    "id": "STORY-010",
+    "title": "Binary Merkle Inclusion Proof Generation & Verification Engine",
+    "description": "Compute canonical leaf hashes, construct Merkle audit paths (proof arrays), and implement independent record verification endpoint.",
+    "priority": 10,
+    "passes": false
+  },
+  {
+    "id": "STORY-011",
+    "title": "Live Polygon PoS Amoy Smart Contract Deployment & Anchoring",
+    "description": "Develop AgriChainAnchor.sol, deploy to Polygon PoS Amoy testnet, submit real on-chain Merkle root transactions, and link PolygonScan proofs.",
+    "priority": 11,
+    "passes": false
+  },
+  {
+    "id": "STORY-012",
+    "title": "Dashboard Stale-Data Indicator & Reconnection Resilience",
+    "description": "Add WebSocket exponential backoff reconnection, live network latency benchmark, and clear UI indicator for stale/offline telemetry.",
+    "priority": 12,
+    "passes": false
   }
 ]

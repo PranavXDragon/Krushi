@@ -363,9 +363,9 @@ def seed_database():
             message="Device: AGRITRACE-001 · Shipment: 04beaccb-7c55-44ab-aa84-2a3f338dcf1c · Value: 58.4 ppm · Threshold: gasLevel > 50",
             observed_value="58.4 ppm",
             threshold_value="gasLevel > 50",
-            status="OPEN",
+            status="RESOLVED",
             created_at=datetime.utcnow() - timedelta(hours=1, minutes=30),
-            resolved_at=None
+            resolved_at=datetime.utcnow() - timedelta(hours=1, minutes=10)
         ),
         Alert(
             shipment_id=primary_shipment_id,
@@ -376,9 +376,9 @@ def seed_database():
             message="Device: AGRITRACE-001 · Shipment: 04beaccb-7c55-44ab-aa84-2a3f338dcf1c · Value: 33.5 · Threshold: temperature > 28",
             observed_value="33.5 °C",
             threshold_value="temperature > 28",
-            status="OPEN",
+            status="RESOLVED",
             created_at=datetime.utcnow() - timedelta(hours=1, minutes=15),
-            resolved_at=None
+            resolved_at=datetime.utcnow() - timedelta(minutes=45)
         ),
         Alert(
             shipment_id=None,

@@ -200,37 +200,55 @@ def process_and_save_telemetry(raw_data: Dict[str, Any], db: Session) -> Optiona
     db.refresh(record)
     return record
 
+LAST_SYNCED_ID_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".supabase_last_id")
+
+def get_last_synced_id() -> int:
+    if os.path.exists(LAST_SYNCED_ID_FILE):
+        try:
+            with open(LAST_SYNCED_ID_FILE, "r") as f:
+                return int(f.read().strip())
+        except Exception:
+            return 0
+    return 10  # Baseline to skip legacy rows
+
+def set_last_synced_id(new_id: int):
+    try:
+        with open(LAST_SYNCED_ID_FILE, "w") as f:
+            f.write(str(new_id))
+    except Exception:
+        pass
+
 async def sync_from_supabase_table(table_name: str = "esp32_telemetry", batch_size: int = 50) -> int:
     """
-    Pulls unsynced records from Supabase table where `synced_to_local = false`,
-    processes them, commits to local database, and marks them synced in Supabase.
+    Pulls newly inserted records from Supabase table where id > last_synced_id,
+    processes them in strictly increasing order, and commits to local database.
+    Does not require Supabase UPDATE permissions.
     """
     client = get_supabase_client()
     if not client:
         return 0
 
+    last_id = get_last_synced_id()
+
     try:
-        # Fetch unsynced rows ordered by sequence or created_at
-        res = client.table(table_name).select("*").eq("synced_to_local", False).order("created_at").limit(batch_size).execute()
+        # Fetch rows strictly newer than last_id ordered by id ascending
+        res = client.table(table_name).select("*").gt("id", last_id).order("id", desc=False).limit(batch_size).execute()
         rows = res.data or []
 
         if not rows:
             return 0
 
-        synced_ids = []
+        max_id = last_id
         db = SessionLocal()
         try:
             for row in rows:
                 process_and_save_telemetry(row, db)
-                if "id" in row:
-                    synced_ids.append(row["id"])
-            
-            # Mark processed rows as synced in Supabase
-            if synced_ids:
-                client.table(table_name).update({"synced_to_local": True}).in_("id", synced_ids).execute()
+                if "id" in row and row["id"] > max_id:
+                    max_id = row["id"]
         finally:
             db.close()
 
+        set_last_synced_id(max_id)
         return len(rows)
     except Exception as e:
         print(f"[Supabase Sync Error]: {e}")

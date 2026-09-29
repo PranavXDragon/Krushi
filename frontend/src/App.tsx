@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
-import { SimulationBar } from './components/SimulationBar';
 import { DashboardView } from './components/DashboardView';
 import { MonitoringView } from './components/MonitoringView';
 import { TraceabilityView } from './components/TraceabilityView';
@@ -174,15 +173,7 @@ export function App() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       
-      {/* Interactive SIH Demo Simulation Control Bar */}
-      <SimulationBar
-        isOnline={isNodeOnline}
-        queuedCount={queuedRecordsCount}
-        onRefresh={loadData}
-        onShowToast={showToast}
-      />
-
-      <div className="flex flex-1 min-h-[calc(100vh-45px)]">
+      <div className="flex flex-1 min-h-screen">
         
         {/* Left Sidebar Shell */}
         <Sidebar
@@ -213,6 +204,10 @@ export function App() {
                 devices={devices}
                 alerts={alerts}
                 latestTelemetry={telemetryList[telemetryList.length - 1]}
+                isOnline={isNodeOnline}
+                queuedCount={queuedRecordsCount}
+                onRefresh={loadData}
+                onShowToast={showToast}
                 onSelectShipment={(id) => {
                   setSelectedShipmentId(id);
                   setActiveTab('monitoring');

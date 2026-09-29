@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Truck, 
   Radio, 
@@ -12,15 +12,27 @@ import {
   Database,
   ArrowRight,
   TrendingUp,
-  Activity
+  Activity,
+  Play,
+  Wifi,
+  WifiOff,
+  Flame,
+  Thermometer,
+  ShieldAlert,
+  Cpu
 } from 'lucide-react';
 import { Shipment, TelemetryRecord, Alert, Device } from '../types';
+import { api } from '../services/api';
 
 interface DashboardViewProps {
   shipments: Shipment[];
   devices: Device[];
   alerts: Alert[];
   latestTelemetry?: TelemetryRecord;
+  isOnline?: boolean;
+  queuedCount?: number;
+  onRefresh?: () => void;
+  onShowToast?: (msg: string, type?: 'success' | 'warning' | 'error' | 'info') => void;
   onSelectShipment: (id: string) => void;
   onNavigateTab: (tab: string) => void;
 }
@@ -30,12 +42,118 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   devices,
   alerts,
   latestTelemetry,
+  isOnline = true,
+  queuedCount = 0,
+  onRefresh,
+  onShowToast,
   onSelectShipment,
   onNavigateTab
 }) => {
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const activeShipment = shipments[0];
   const openAlerts = alerts.filter(a => a.status === 'OPEN');
   const onlineDevices = devices.filter(d => d.status === 'online');
+
+  const handleTick = async () => {
+    setLoadingAction('tick');
+    try {
+      const res = await api.simulationTick();
+      if (res.action === 'queued_offline') {
+        onShowToast?.(`Sample #${res.record.sequence} saved to offline edge flash`, 'warning');
+      } else {
+        onShowToast?.(`Live Telemetry Ingested: ${res.record.temperature}°C, ${res.record.gas_ethylene} ppm (Seq #${res.record.sequence})`, 'success');
+      }
+      onRefresh?.();
+    } catch {
+      onShowToast?.('Could not ingest sample', 'error');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleToggleNetwork = async () => {
+    setLoadingAction('net');
+    try {
+      const res = await api.toggleNetwork(!isOnline);
+      onShowToast?.(res.message, !isOnline ? 'success' : 'warning');
+      onRefresh?.();
+    } catch {
+      onShowToast?.('Network toggle failed', 'error');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleBatchSync = async () => {
+    setLoadingAction('sync');
+    try {
+      const res = await api.batchSync();
+      if (res.status === 'success') {
+        onShowToast?.(`MQTT Burst Sync: ${res.synced_count} queued records verified with 0 data loss`, 'success');
+      } else {
+        onShowToast?.(res.message, 'info');
+      }
+      onRefresh?.();
+    } catch {
+      onShowToast?.('Sync failed', 'error');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleAnchor = async () => {
+    setLoadingAction('anchor');
+    try {
+      const res = await api.anchorBlockchain();
+      if (res.status === 'anchored') {
+        onShowToast?.(`Merkle Root anchored on Polygon zkEVM (Block #${res.block_number})`, 'success');
+      }
+      onRefresh?.();
+    } catch {
+      onShowToast?.('Blockchain anchoring failed', 'error');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleGasSpike = async () => {
+    setLoadingAction('gas');
+    try {
+      await api.injectGasSpike(64.8);
+      onShowToast?.('Ethylene Spoilage Excursion Triggered (64.8 ppm > 50 ppm limit)', 'error');
+      onRefresh?.();
+    } catch {
+      onShowToast?.('Spike injection failed', 'error');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleTempSpike = async () => {
+    setLoadingAction('temp');
+    try {
+      await api.injectTempSpike(33.5);
+      onShowToast?.('Temperature Chilling Breach Triggered (33.5°C > 8°C limit)', 'error');
+      onRefresh?.();
+    } catch {
+      onShowToast?.('Temp injection failed', 'error');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
+
+  const handleTamper = async () => {
+    setLoadingAction('tamper');
+    try {
+      const res = await api.corruptHashForAudit();
+      onShowToast?.(`Record #${res.sequence} modified in DB: cryptographic engine flags tamper!`, 'warning');
+      onRefresh?.();
+    } catch {
+      onShowToast?.('Tamper test failed', 'error');
+    } finally {
+      setLoadingAction(null);
+    }
+  };
 
   // Highway Route Waypoints for the Route Map Graphic
   const waypoints = [
@@ -136,6 +254,127 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <span className="text-[11px] text-purple-600 font-semibold mt-1 block">Polygon zkEVM Anchor</span>
         </div>
 
+      </div>
+
+      {/* Integrated IoT Edge Telematics & Field Validation Console */}
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0">
+              <Cpu className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-slate-900">IoT Edge Telematics & Hardware Console</h3>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold">
+                  Node #AGRITRACE-001
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                SECP256k1 signed sensor ingest, offline mountain blindzone queuing, and on-chain zkEVM anchoring
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Live Connectivity Badge */}
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition ${
+              isOnline 
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                : 'bg-amber-50 text-amber-800 border-amber-200 animate-pulse'
+            }`}>
+              {isOnline ? <Wifi className="w-3.5 h-3.5 text-emerald-600" /> : <WifiOff className="w-3.5 h-3.5 text-amber-600" />}
+              <span>{isOnline ? 'LTE-M 4G Active' : `Offline Blindspot (${queuedCount} Queued)`}</span>
+            </div>
+
+            {/* Solar Power Status */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs text-slate-600 font-semibold">
+              <Sun className="w-3.5 h-3.5 text-amber-500" />
+              <span>Solar: 320 mW</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Controls Toolbar */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Sample Ingest */}
+          <button
+            onClick={handleTick}
+            disabled={loadingAction === 'tick'}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs disabled:opacity-50"
+          >
+            <Play className="w-3.5 h-3.5 fill-current" />
+            <span>{loadingAction === 'tick' ? 'Sampling...' : 'Sample 10s Telemetry'}</span>
+          </button>
+
+          {/* Toggle Online / Offline */}
+          <button
+            onClick={handleToggleNetwork}
+            disabled={loadingAction === 'net'}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition shadow-xs disabled:opacity-50 ${
+              isOnline 
+                ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300' 
+                : 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600'
+            }`}
+          >
+            {isOnline ? <WifiOff className="w-3.5 h-3.5 text-amber-600" /> : <Wifi className="w-3.5 h-3.5 text-white" />}
+            <span>{isOnline ? 'Simulate Mountain Blindspot' : 'Restore Cellular Network'}</span>
+          </button>
+
+          {/* Burst Sync */}
+          <button
+            onClick={handleBatchSync}
+            disabled={loadingAction === 'sync' || queuedCount === 0}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs disabled:opacity-40"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-teal-600 ${loadingAction === 'sync' ? 'animate-spin' : ''}`} />
+            <span>Burst Batch Sync {queuedCount > 0 ? `(${queuedCount})` : ''}</span>
+          </button>
+
+          {/* Anchor zkEVM */}
+          <button
+            onClick={handleAnchor}
+            disabled={loadingAction === 'anchor'}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-purple-700 border border-purple-200 text-xs font-bold transition shadow-xs disabled:opacity-50"
+          >
+            <Database className="w-3.5 h-3.5 text-purple-600" />
+            <span>{loadingAction === 'anchor' ? 'Anchoring...' : 'Anchor zkEVM Proof'}</span>
+          </button>
+
+          {/* Divider */}
+          <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+          {/* Tripwire & Excursion Tests */}
+          <button
+            onClick={handleGasSpike}
+            disabled={loadingAction === 'gas'}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-amber-50/80 text-amber-700 border border-amber-200 text-xs font-bold transition shadow-xs disabled:opacity-50"
+            title="Inject ripening gas excursion > 50 ppm"
+          >
+            <Flame className="w-3.5 h-3.5 text-amber-500" />
+            <span>Test Gas Spike</span>
+          </button>
+
+          <button
+            onClick={handleTempSpike}
+            disabled={loadingAction === 'temp'}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-rose-50/80 text-rose-700 border border-rose-200 text-xs font-bold transition shadow-xs disabled:opacity-50"
+            title="Inject temperature excursion > 8°C"
+          >
+            <Thermometer className="w-3.5 h-3.5 text-rose-500" />
+            <span>Test Temp Spike</span>
+          </button>
+
+          <button
+            onClick={handleTamper}
+            disabled={loadingAction === 'tamper'}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-rose-50/80 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs disabled:opacity-50"
+            title="Simulate bit tamper in database to verify cryptographic detection"
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+            <span>Audit Tamper Test</span>
+          </button>
+        </div>
       </div>
 
       {/* Row 2: Live Route Transit Map & Primary Cargo Card */}

@@ -59,16 +59,16 @@ export const DevicesView: React.FC<DevicesViewProps> = ({
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       
-      {/* Header Banner */}
-      <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      {/* Header Banner: Clean White & Short Professional */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold mb-3 border border-emerald-200">
-            <Radio className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-semibold mb-1 border border-emerald-200">
+            <Radio className="w-3 h-3 text-emerald-600 animate-pulse" />
             <span>4G Telematics Edge Node Fleet</span>
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-900 font-['Outfit']">IoT Hardware Nodes & Edge Cryptography</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Monitor real-time hardware vitals, LiFePO4 battery harvesting, cellular modem links, and asymmetric ECDSA device credentials.
+          <h1 className="text-xl font-bold text-slate-900 font-['Outfit']">IoT Hardware Nodes & Edge Cryptography</h1>
+          <p className="text-slate-500 text-xs mt-0.5">
+            Monitor real-time hardware vitals, LiFePO4 battery harvesting, cellular links, and ECDSA credentials.
           </p>
         </div>
 

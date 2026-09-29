@@ -144,18 +144,28 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-emerald-800 to-emerald-950 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-500/20 via-transparent to-transparent pointer-events-none" />
-        <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-700/60 border border-emerald-400/30 text-emerald-200 text-xs font-semibold mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
-            <span>Kisan Cold-Chain Dispatch Registration</span>
+      {/* Header Banner: Clean White & Short Professional */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0 shadow-xs">
+            <Truck className="w-5 h-5 text-emerald-600" />
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight font-['Outfit']">Create New Farm-to-Fork Shipment</h1>
-          <p className="text-emerald-100 text-sm mt-2 leading-relaxed">
-            Register fresh farm produce, lock tamper-proof temperature thresholds, and bind the cold-chain telemetry unit for blockchain-backed provenance.
-          </p>
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-800 text-[11px] font-semibold mb-1">
+              <Sparkles className="w-3 h-3 text-emerald-600" />
+              <span>Kisan Cold-Chain Dispatch Registration</span>
+            </div>
+            <h1 className="text-xl font-bold text-slate-900 font-['Outfit']">Create New Farm-to-Fork Shipment</h1>
+            <p className="text-slate-500 text-xs mt-0.5">
+              Register fresh farm produce, lock temperature thresholds, and bind IoT hardware telemetry.
+            </p>
+          </div>
+        </div>
+
+        <div className="hidden sm:flex items-center gap-2">
+          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50/80 px-3 py-1 rounded-lg border border-emerald-100">
+            APEDA / FSSAI Compliant
+          </span>
         </div>
       </div>
 

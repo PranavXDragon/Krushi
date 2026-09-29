@@ -23,6 +23,15 @@ from models import SessionLocal, Device, Shipment, TelemetryRecord
 
 client = TestClient(app)
 
+@pytest.fixture(autouse=True)
+def clean_test_sequences():
+    db = SessionLocal()
+    try:
+        db.query(TelemetryRecord).filter(TelemetryRecord.sequence >= 800000).delete()
+        db.commit()
+    finally:
+        db.close()
+
 def test_canonical_json_determinism():
     """Ensures dictionary key ordering and whitespace normalization are strictly deterministic."""
     data1 = {"temperature": 4.2, "device_id": "AGRITRACE-001", "sequence": 1}

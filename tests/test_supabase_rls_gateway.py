@@ -27,6 +27,7 @@ def setup_devices():
     from seed_data import seed_database
     db = SessionLocal()
     try:
+        db.query(TelemetryRecord).filter(TelemetryRecord.sequence >= 800000).delete()
         dev1 = db.query(Device).filter(Device.id == "AGRITRACE-001").first()
         if not dev1 or not dev1.auth_token:
             seed_database()

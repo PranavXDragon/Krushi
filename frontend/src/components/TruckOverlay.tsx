@@ -82,22 +82,30 @@ export const TruckOverlay: React.FC<TruckOverlayProps> = ({
       </div>
 
       {/* Main Truck Graphic Container with HTML / React Compartment Overlays */}
-      <div className="relative mt-6 rounded-2xl overflow-hidden bg-transparent p-2">
+      <div className="relative mt-6 rounded-2xl overflow-hidden bg-gradient-to-b from-slate-50/80 via-slate-100/40 to-slate-200/50 p-4 sm:p-6 border border-slate-200/70 shadow-inner">
         
-        {/* Base Layer Truck Image */}
-        <div className="relative max-w-4xl mx-auto flex items-center justify-center">
+        {/* Ambient Cold Chain Atmosphere Glow */}
+        <div className="absolute inset-0 bg-radial from-teal-500/5 via-transparent to-transparent pointer-events-none" />
+
+        {/* Base Layer Truck Image with Ground Integration */}
+        <div className="relative max-w-4xl mx-auto flex flex-col items-center justify-center">
           <img
             src="/truck1.webp"
             alt="Cold Chain Reefer Truck"
-            className="w-full h-auto object-contain select-none filter drop-shadow-md"
+            className="w-full h-auto object-contain select-none filter drop-shadow-md transition-all duration-300"
             onError={(e) => {
               // Fallback if asset load fails
               (e.target as HTMLElement).style.display = 'none';
             }}
           />
 
+          {/* Sleek Transit Surface & Ambient Shadow Integration */}
+          <div className="w-full -mt-1.5 h-1.5 rounded-full bg-gradient-to-r from-transparent via-slate-300/70 to-transparent flex items-center justify-center">
+            <div className="w-2/3 h-[1px] bg-gradient-to-r from-transparent via-teal-500/40 to-transparent" />
+          </div>
+
           {/* Top Truck Info Pills (Floating above truck) */}
-          <div className="absolute top-2 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200/80 shadow-xs flex items-center gap-3 text-xs">
+          <div className="absolute top-2 left-2 sm:left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-200/80 shadow-xs flex items-center gap-2 sm:gap-3 text-xs">
             <div className="flex items-center gap-1.5 text-slate-700 font-medium">
               <MapPin className="w-3.5 h-3.5 text-rose-500" />
               <span>GPS: {lat.toFixed(4)}°N, {lon.toFixed(4)}°E</span>

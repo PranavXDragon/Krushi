@@ -193,6 +193,10 @@ export function App() {
             setSearchQuery={setSearchQuery}
             openAlertsCount={openAlertsCount}
             onOpenAlerts={() => setActiveTab('alerts')}
+            shipments={shipments}
+            devices={devices}
+            onSelectShipment={(id) => setSelectedShipmentId(id)}
+            onNavigateTab={setActiveTab}
           />
 
           {/* Page Body */}

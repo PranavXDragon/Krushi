@@ -18,6 +18,7 @@ from models import (
 )
 from crypto_engine import CryptoEngine
 from simulator import simulator_instance, IoTSimulator
+from supabase_sync import process_and_save_telemetry, sync_from_supabase_table, get_supabase_client
 
 app = FastAPI(
     title="AgriTrace API",
@@ -286,6 +287,55 @@ def get_telemetry(
         }
         for r in records
     ]
+
+# 3.1 SUPABASE INGESTION & WEBHOOKS
+@app.post("/api/v1/telemetry/supabase-webhook")
+async def supabase_webhook(payload: Dict[str, Any], db: Session = Depends(get_db)):
+    """
+    Receives Supabase Database Webhook events on INSERT into `esp32_telemetry`.
+    Instantly computes canonical hash chain, checks threshold excursions, commits locally,
+    and broadcasts to the dashboard via WebSocket.
+    """
+    record_data = payload.get("record") or payload
+    saved_record = process_and_save_telemetry(record_data, db)
+    if saved_record:
+        # Broadcast to dashboard in real time
+        await broadcast_telemetry({
+            "type": "NEW_TELEMETRY",
+            "data": {
+                "id": saved_record.id,
+                "device_id": saved_record.device_id,
+                "shipment_id": saved_record.shipment_id,
+                "sequence": saved_record.sequence,
+                "timestamp": saved_record.timestamp.isoformat() if saved_record.timestamp else None,
+                "temperature": saved_record.temperature,
+                "humidity": saved_record.humidity,
+                "gas_ethylene": saved_record.gas_ethylene,
+                "latitude": saved_record.latitude,
+                "longitude": saved_record.longitude,
+                "battery": saved_record.battery,
+                "solar_power_mw": saved_record.solar_power_mw,
+                "network_state": saved_record.network_state,
+                "sync_state": saved_record.sync_state,
+                "record_hash": saved_record.record_hash,
+                "previous_hash": saved_record.previous_hash,
+                "signature": saved_record.signature,
+                "integrity_status": saved_record.integrity_status
+            }
+        })
+        return {
+            "status": "success",
+            "sequence": saved_record.sequence,
+            "hash": saved_record.record_hash,
+            "integrity": saved_record.integrity_status
+        }
+    return {"status": "ignored"}
+
+@app.post("/api/v1/telemetry/supabase-sync")
+async def trigger_supabase_sync():
+    """Manually pulls unsynced records from Supabase into local database."""
+    count = await sync_from_supabase_table()
+    return {"status": "success", "synced_count": count}
 
 # 4. ALERTS
 @app.get("/api/v1/alerts")

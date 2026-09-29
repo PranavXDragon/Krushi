@@ -222,21 +222,21 @@ def seed_database():
         ),
         ShipmentEvent(
             shipment_id=primary_shipment_id,
-            event_type="EXCURSION",
-            title="Ethylene Spoilage Spike Detected",
-            description="Ethylene level rose to 58.4 ppm (threshold: 50 ppm). Micro-ventilation alert dispatched to driver app.",
+            event_type="QUALITY_CHECK",
+            title="Cold-Chain Quality Verified",
+            description="Ethylene level steady at 12.8 ppm (safe < 50 ppm). Reefer temp strictly within nominal bounds (3.9°C).",
             location_name="Mangaon Transit Checkpoint",
             latitude=18.2562,
             longitude=73.2871,
             timestamp=datetime.utcnow() - timedelta(hours=1, minutes=30),
-            severity="critical",
+            severity="success",
             hash_proof="0x4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a"
         ),
         ShipmentEvent(
             shipment_id=primary_shipment_id,
             event_type="CHECKPOINT",
             title="Navi Mumbai Inbound Security Gate",
-            description="Geofence entry confirmed. Current temp 4.1°C, humidity 79%, solar battery 94.5%.",
+            description="Geofence entry confirmed. Current temp 4.0°C, humidity 78%, solar battery 94.5%.",
             location_name="Vashi Cold Storage Terminal",
             latitude=19.0760,
             longitude=72.9982,
@@ -266,24 +266,17 @@ def seed_database():
 
         t_point = start_time + timedelta(minutes=seq * 6)
         
-        # Environmental dynamics:
-        # Offline simulation in seq 22-35
-        # Gas spike in seq 36-42
+        # Environmental dynamics: nominal export-grade cold chain
         is_offline_range = 22 <= seq <= 35
-        is_gas_spike = 36 <= seq <= 42
 
-        if is_gas_spike:
-            temp = round(4.8 + random.uniform(-0.3, 0.4), 2)
-            hum = round(83.0 + random.uniform(-2.0, 3.0), 1)
-            gas = round(56.5 + random.uniform(0.0, 8.0), 1) # Spike above 50
-        elif is_offline_range:
+        if is_offline_range:
             temp = round(4.1 + random.uniform(-0.2, 0.3), 2)
             hum = round(78.5 + random.uniform(-1.0, 1.5), 1)
-            gas = round(14.0 + random.uniform(-1.0, 2.0), 1)
+            gas = round(13.2 + random.uniform(-0.8, 1.0), 1)
         else:
-            temp = round(4.2 + random.uniform(-0.4, 0.5), 2)
-            hum = round(77.0 + random.uniform(-2.0, 2.0), 1)
-            gas = round(12.5 + random.uniform(-1.5, 1.5), 1)
+            temp = round(4.0 + random.uniform(-0.3, 0.4), 2)
+            hum = round(77.5 + random.uniform(-1.5, 1.5), 1)
+            gas = round(12.5 + random.uniform(-1.0, 1.2), 1)
 
         batt = round(96.0 - (seq * 0.03) + (0.5 if seq % 4 == 0 else 0), 1)
 

@@ -23,16 +23,20 @@ import { api } from '../services/api';
 
 interface TraceabilityViewProps {
   shipment: Shipment;
+  shipments?: Shipment[];
   events: ShipmentEvent[];
   verification: VerificationResult | null;
+  onSelectShipment?: (id: string) => void;
   onRefresh: () => void;
   onShowToast: (msg: string, type?: 'success' | 'warning' | 'error' | 'info') => void;
 }
 
 export const TraceabilityView: React.FC<TraceabilityViewProps> = ({
   shipment,
+  shipments = [],
   events,
   verification,
+  onSelectShipment,
   onRefresh,
   onShowToast
 }) => {
@@ -80,7 +84,25 @@ export const TraceabilityView: React.FC<TraceabilityViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Live Shipment Switcher */}
+          {shipments.length > 0 && onSelectShipment && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 hidden sm:inline">Produce:</span>
+              <select
+                value={shipment.id}
+                onChange={(e) => onSelectShipment(e.target.value)}
+                className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-xs"
+              >
+                {shipments.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.product_name} ({s.batch_code})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* QR Code Action Button */}
           <button
             onClick={handleOpenQR}

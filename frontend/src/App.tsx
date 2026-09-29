@@ -232,8 +232,10 @@ export function App() {
             {activeTab === 'traceability' && (
               <TraceabilityView
                 shipment={activeShipment}
+                shipments={shipments}
                 events={events}
                 verification={verification}
+                onSelectShipment={(id) => setSelectedShipmentId(id)}
                 onRefresh={loadData}
                 onShowToast={showToast}
               />

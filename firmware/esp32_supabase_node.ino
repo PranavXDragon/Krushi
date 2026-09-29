@@ -18,10 +18,12 @@
 const char* WIFI_SSID     = "YOUR_WIFI_SSID";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 
-// 2. Gateway API Configuration
+// 2. Gateway & Supabase API Configuration
 // For local testing: "http://<YOUR_COMPUTER_LOCAL_IP>:8000/api/v1/telemetry/secure-ingest"
-// For cloud production: "https://your-api-domain.com/api/v1/telemetry/secure-ingest"
+// For direct Supabase: "https://hccppqykmjfcpjmhntks.supabase.co/rest/v1/esp32_telemetry"
 const char* GATEWAY_INGEST_URL = "http://192.168.1.100:8000/api/v1/telemetry/secure-ingest";
+const char* SUPABASE_REST_URL  = "https://hccppqykmjfcpjmhntks.supabase.co/rest/v1/esp32_telemetry";
+const char* SUPABASE_ANON_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjY3BwcXlrbWpmY3BqbWhudGtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2NjkyODcsImV4cCI6MjEwNjI0NTI4N30.4ATVqARowUNzUk49LZMKkIbeealIlnQCf0Tt6JnsKvQ";
 
 // 3. Node Cryptographic Identity & Scoped Credential Token
 const char* DEVICE_ID = "AGRITRACE-001";

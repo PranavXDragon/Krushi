@@ -10,17 +10,26 @@ Pipeline:
 """
 
 import os
+import socket
 import asyncio
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 
+# DNS Resolver Fallback for newly registered Supabase subdomains
+_orig_getaddrinfo = socket.getaddrinfo
+def _custom_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    if host == "hccppqykmjfcpjmhntks.supabase.co":
+        return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', ('104.18.38.10', port))]
+    return _orig_getaddrinfo(host, port, family, type, proto, flags)
+socket.getaddrinfo = _custom_getaddrinfo
+
 from models import SessionLocal, Device, Shipment, TelemetryRecord, Alert
 from crypto_engine import CryptoEngine
 
 # Supabase Credentials (configurable via environment variables or .env)
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://hccppqykmjfcpjmhntks.supabase.co")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjY3BwcXlrbWpmY3BqbWhudGtzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2NjkyODcsImV4cCI6MjEwNjI0NTI4N30.4ATVqARowUNzUk49LZMKkIbeealIlnQCf0Tt6JnsKvQ")
 
 supabase_client = None
 

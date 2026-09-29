@@ -53,7 +53,7 @@
     "title": "Supabase RLS Lockdown & Authenticated Ingestion Gateway",
     "description": "Lock down Supabase direct anon table insertions, route telemetry through authenticated FastAPI gateway with replay detection and token validation.",
     "priority": 8,
-    "passes": false
+    "passes": true
   },
   {
     "id": "STORY-009",

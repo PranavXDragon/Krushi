@@ -22,3 +22,8 @@ This guide documents patterns, conventions, and reusable engineering practices e
 
 ## 3. Database & Path Conventions
 - SQLite paths in `models.py` must use absolute paths relative to `__file__` (`DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(os.path.abspath(__file__)), "agritrace.db"))`) to ensure consistent test and runtime execution regardless of working directory.
+
+## 4. Supabase RLS & Ingestion Access Control
+- **No Direct Anon Inserts**: Direct table insertions using public `anon` API keys are revoked in Supabase RLS (`scripts/supabase_hardened_rls.sql`). All telemetry must transit through `/api/v1/telemetry/secure-ingest`.
+- **Anti-Impersonation Enforcement**: Devices are tied to `current_shipment_id`. Any cross-shipment submission is rejected with 403 Forbidden to prevent compromised truck nodes from polluting rival shipment logs.
+- **Device Credential Tokens**: Ingestion gateway supports dual-mode token delivery (via `X-Device-Token` HTTP header or payload `device_token`).

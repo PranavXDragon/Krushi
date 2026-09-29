@@ -32,6 +32,7 @@ class Device(Base):
     status = Column(String, default="online") # online, offline, syncing, tamper
     last_seen = Column(DateTime, default=datetime.utcnow)
     current_shipment_id = Column(String, nullable=True)
+    auth_token = Column(String, default="krushi_tok_agritrace_001_sec2026")
 
 class Shipment(Base):
     __tablename__ = "shipments"
@@ -125,6 +126,14 @@ class LedgerAnchor(Base):
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    # Auto-migration for schema extensions
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE devices ADD COLUMN auth_token TEXT DEFAULT 'krushi_tok_agritrace_001_sec2026'"))
+            conn.commit()
+        except Exception:
+            pass # Column already exists
 
 def get_db():
     db = SessionLocal()

@@ -47,3 +47,27 @@
   - Verifying the signature against the recalculation of the canonical digest rather than blindly relying on the client's submitted hash prevents the "valid signature on fraudulent hash" attack vector.
   - Database relative pathing in SQLite must be anchored with `__file__` to ensure test runners and application servers access the identical database regardless of invocation directory.
 
+## 2026-09-29 - STORY-008 - Supabase RLS Lockdown & Authenticated Ingestion Gateway
+- What was implemented:
+  - Authored comprehensive SQL migration `scripts/supabase_hardened_rls.sql` locking down direct `anon` writes, enforcing strict RLS on all telemetry tables, and reserving write permissions exclusively to the backend service role.
+  - Implemented device credential token authentication via `X-Device-Token` header and JSON payload `device_token` with anti-impersonation cross-validation (`current_shipment_id`).
+  - Added schema auto-migration for `auth_token` in `backend/models.py` and updated `backend/seed_data.py`.
+  - Updated integration guide `docs/ESP32_SUPABASE_INTEGRATION_GUIDE.md` deprecating insecure open policies.
+  - Authored automated test suite `tests/test_supabase_rls_gateway.py` validating 100% rejection of unauthenticated requests, revoked credentials, and truck impersonation attempts.
+- Files changed:
+  - backend/models.py
+  - backend/crypto_engine.py
+  - backend/main.py
+  - backend/seed_data.py
+  - scripts/supabase_hardened_rls.sql
+  - docs/ESP32_SUPABASE_INTEGRATION_GUIDE.md
+  - tests/test_supabase_rls_gateway.py
+  - tests/test_device_signature.py
+  - scripts/ralph/prd.json
+  - scripts/ralph/progress.txt
+  - AGENTS.md
+- **Learnings:**
+  - Direct database writes from IoT nodes using shared anonymous client keys bypass all application-level invariant checks and replay protection. Routing all writes through an authenticated gateway proxy ensures unified sequence verification, tamper detection, and RLS enforcement.
+  - Anti-impersonation validation requires cross-referencing the device's persistent assignment in the registry against incoming route metadata before allowing telemetry writes.
+
+

@@ -18,11 +18,13 @@ import ecdsa
 DEVICE_MASTER_CREDENTIALS = {
     "AGRITRACE-001": {
         "private_key": "db4a376e129ffd9f586229b01f32d7dfc477e9c8a59c9749e96f7fff77339615",
-        "public_key": "f85671d8b328e562b2d72d791eb038038f2a6283e680b4787696dd3a988dba91f566b9009a1b6eb1f9eeebb20509d03c04ae7f41cc7541ee0ea39e8425f284ec"
+        "public_key": "f85671d8b328e562b2d72d791eb038038f2a6283e680b4787696dd3a988dba91f566b9009a1b6eb1f9eeebb20509d03c04ae7f41cc7541ee0ea39e8425f284ec",
+        "auth_token": "krushi_tok_agritrace_001_sec2026"
     },
     "AGRITRACE-002": {
         "private_key": "2259da38a429dcaf95e881474c2c77417c44a348d495185380a92b4bed929fe4",
-        "public_key": "af5827a35d02153d187904878833583eb3e361abc104d00278ecd3af3c51507e3ca6cf1794ac591e3d135b87cb3c8aa256411945d59e5c5d6a938f1af5c5501f"
+        "public_key": "af5827a35d02153d187904878833583eb3e361abc104d00278ecd3af3c51507e3ca6cf1794ac591e3d135b87cb3c8aa256411945d59e5c5d6a938f1af5c5501f",
+        "auth_token": "krushi_tok_agritrace_002_sec2026"
     }
 }
 

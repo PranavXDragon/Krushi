@@ -51,7 +51,8 @@ def seed_database():
         signal_strength=-68,
         status="online",
         last_seen=datetime.utcnow(),
-        current_shipment_id="04beaccb-7c55-44ab-aa84-2a3f338dcf1c"
+        current_shipment_id="04beaccb-7c55-44ab-aa84-2a3f338dcf1c",
+        auth_token=DEVICE_MASTER_CREDENTIALS["AGRITRACE-001"]["auth_token"]
     )
 
     dev2 = Device(
@@ -65,7 +66,8 @@ def seed_database():
         signal_strength=-72,
         status="online",
         last_seen=datetime.utcnow() - timedelta(minutes=5),
-        current_shipment_id="SHP-2026-NASHIK-MUMBAI"
+        current_shipment_id="SHP-2026-NASHIK-MUMBAI",
+        auth_token=DEVICE_MASTER_CREDENTIALS["AGRITRACE-002"]["auth_token"]
     )
 
     dev3 = Device(

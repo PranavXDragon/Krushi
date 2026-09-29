@@ -77,21 +77,29 @@ CREATE TABLE IF NOT EXISTS public.esp32_telemetry (
 CREATE INDEX IF NOT EXISTS idx_esp32_telem_synced ON public.esp32_telemetry(synced_to_local, created_at);
 CREATE INDEX IF NOT EXISTS idx_esp32_telem_device ON public.esp32_telemetry(device_id, sequence);
 
--- 3. Enable Row Level Security (RLS) or allow anon insert for IoT nodes
+-- 3. Hardened Row Level Security (RLS) Lockdown
 ALTER TABLE public.esp32_telemetry ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow anon insert from ESP32" 
-ON public.esp32_telemetry 
-FOR INSERT 
-TO anon 
-WITH CHECK (true);
+-- REVOKE direct client/anon writes (forces all telemetry through the authenticated gateway)
+REVOKE INSERT, UPDATE, DELETE ON public.esp32_telemetry FROM anon;
 
-CREATE POLICY "Allow anon select and update for backend sync" 
+-- Allow public read-only access strictly for verified records (powers consumer QR provenance portal)
+CREATE POLICY "Allow read-only verified telemetry" 
+ON public.esp32_telemetry 
+FOR SELECT 
+TO anon, authenticated 
+USING (integrity_status = 'verified');
+
+-- Allow service_role full control strictly for the authenticated backend gateway
+CREATE POLICY "Allow server gateway full management" 
 ON public.esp32_telemetry 
 FOR ALL 
-TO anon 
-USING (true);
+TO service_role 
+USING (true)
+WITH CHECK (true);
 ```
+
+> **Security Architecture Note**: ESP32 edge nodes must **never** embed Supabase `service_role` master secret keys. Telemetry packets are signed with the device's ECC private key and routed to the authenticated backend gateway (`/api/v1/telemetry/secure-ingest`). The backend validates monotonic sequences, verifies ECDSA signatures, and writes verified rows into Supabase using server-held credentials.
 
 ---
 

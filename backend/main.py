@@ -6,7 +6,7 @@ Full Implementation of PRD Specification (SIH26232)
 import asyncio
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
-from fastapi import FastAPI, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -100,6 +100,7 @@ class SecureTelemetryIngestSchema(BaseModel):
     previous_hash: Optional[str] = None
     record_hash: str
     signature: str
+    device_token: Optional[str] = None
 
 # ================= REST ENDPOINTS =================
 
@@ -357,15 +358,20 @@ async def trigger_supabase_sync():
 
 # 3.2 SECURE EDGE INGESTION WITH ECDSA VERIFICATION & REPLAY PROTECTION
 @app.post("/api/v1/telemetry/secure-ingest")
-async def secure_telemetry_ingest(payload: SecureTelemetryIngestSchema, db: Session = Depends(get_db)):
+async def secure_telemetry_ingest(
+    payload: SecureTelemetryIngestSchema,
+    x_device_token: Optional[str] = Header(None, alias="X-Device-Token"),
+    db: Session = Depends(get_db)
+):
     """
     Cryptographically Authenticated Telemetry Ingestion Endpoint.
-    1. Authenticates device identity and checks revocation status.
-    2. Enforces monotonic sequence numbers & prevents replay attacks.
-    3. Recomputes canonical RFC 8785 SHA-256 digest to detect sensor mutation in transit.
-    4. Validates ECDSA (secp256k1) digital signature with device's registered public key.
-    5. Checks environmental thresholds and logs excursions.
-    6. Broadcasts to operations dashboard in real-time.
+    1. Authenticates device identity, credential token, and checks revocation status.
+    2. Enforces anti-impersonation: restricts device to its assigned truck/shipment.
+    3. Enforces monotonic sequence numbers & prevents replay attacks.
+    4. Recomputes canonical RFC 8785 SHA-256 digest to detect sensor mutation in transit.
+    5. Validates ECDSA (secp256k1) digital signature with device's registered public key.
+    6. Checks environmental thresholds and logs excursions.
+    7. Broadcasts to operations dashboard in real-time.
     """
     # 1. Device identity & revocation check
     dev = db.query(Device).filter(Device.id == payload.device_id).first()
@@ -374,10 +380,27 @@ async def secure_telemetry_ingest(payload: SecureTelemetryIngestSchema, db: Sess
             status_code=401,
             detail=f"Device '{payload.device_id}' is not registered in KRUSHI registry. Ingestion unauthorized."
         )
+
+    # 1.1 Device Token Authentication (Header or payload)
+    provided_token = x_device_token or payload.device_token
+    if dev.auth_token and (not provided_token or provided_token != dev.auth_token):
+        raise HTTPException(
+            status_code=401,
+            detail=f"Device authentication failed: missing or invalid credential token for '{payload.device_id}'."
+        )
+
     if dev.status == "revoked":
         raise HTTPException(
             status_code=403,
             detail=f"Device '{payload.device_id}' credential has been revoked. Ingestion rejected."
+        )
+
+    # 1.2 Anti-Impersonation Check
+    # Device can only submit telemetry for its assigned shipment
+    if payload.shipment_id and dev.current_shipment_id and payload.shipment_id != dev.current_shipment_id:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Device impersonation detected: device '{payload.device_id}' is assigned to shipment '{dev.current_shipment_id}', but attempted to submit telemetry for shipment '{payload.shipment_id}'. Ingestion rejected."
         )
 
     # 2. Resolve active shipment

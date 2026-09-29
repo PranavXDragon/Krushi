@@ -107,7 +107,8 @@ def test_secure_ingest_valid_packet():
         "solar_power_mw": 320.0,
         "previous_hash": prev_hash,
         "record_hash": rec_hash,
-        "signature": sig
+        "signature": sig,
+        "device_token": DEVICE_MASTER_CREDENTIALS[device_id]["auth_token"]
     }
 
     res = client.post("/api/v1/telemetry/secure-ingest", json=payload)
@@ -159,7 +160,8 @@ def test_secure_ingest_rejects_modified_temperature():
         "battery": 94.5,
         "previous_hash": prev_hash,
         "record_hash": original_hash, # Mismatch with 28.5
-        "signature": sig
+        "signature": sig,
+        "device_token": DEVICE_MASTER_CREDENTIALS[device_id]["auth_token"]
     }
 
     res = client.post("/api/v1/telemetry/secure-ingest", json=tampered_payload)
@@ -206,7 +208,8 @@ def test_secure_ingest_rejects_forged_signature():
         "battery": 94.5,
         "previous_hash": prev_hash,
         "record_hash": rec_hash,
-        "signature": forged_sig
+        "signature": forged_sig,
+        "device_token": DEVICE_MASTER_CREDENTIALS[device_id]["auth_token"]
     }
 
     res = client.post("/api/v1/telemetry/secure-ingest", json=payload)
@@ -256,7 +259,8 @@ def test_secure_ingest_rejects_revoked_device():
         "battery": 94.5,
         "previous_hash": prev_hash,
         "record_hash": rec_hash,
-        "signature": sig
+        "signature": sig,
+        "device_token": DEVICE_MASTER_CREDENTIALS[device_id]["auth_token"]
     }
 
     # Ingestion must be rejected with 403

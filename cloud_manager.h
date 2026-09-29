@@ -1,5 +1,11 @@
 #pragma once
-#include "Arduino.h"
+#ifdef ARDUINO
+#include <Arduino.h>
+#else
+#include <string>
+#include <cstdint>
+using String = std::string;
+#endif
 #include <vector>
 
 // Forward declarations

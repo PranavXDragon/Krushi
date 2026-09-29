@@ -1,6 +1,0 @@
--xc++
--std=c++17
--w
--Wno-everything
--I.
--I./firmware

@@ -8,9 +8,9 @@
  * - Authenticated Ingestion Gateway API with Replay Protection
  */
 
-#include "WiFi.h"
-#include "HTTPClient.h"
-#include "WiFiClientSecure.h"
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 #include "mbedtls/sha256.h"
 

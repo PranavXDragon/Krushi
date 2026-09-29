@@ -1,5 +1,19 @@
 #pragma once
-#include "Arduino.h"
+#ifdef ARDUINO
+#include <Arduino.h>
+#else
+#include <string>
+#include <cstdint>
+#include <iostream>
+#include <cstdio>
+using String = std::string;
+struct SerialFallback {
+  template<typename T> void println(const T& msg) { std::cout << msg << std::endl; }
+  void println() { std::cout << std::endl; }
+  template<typename... Args> void printf(const char* fmt, Args... args) { ::printf(fmt, args...); }
+};
+static SerialFallback Serial;
+#endif
 
 // ============================================================================
 // KRUSHI Network Manager & Transport Interface

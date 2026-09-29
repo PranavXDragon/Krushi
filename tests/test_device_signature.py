@@ -17,9 +17,15 @@ if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
 from fastapi.testclient import TestClient
-from main import app
-from crypto_engine import CryptoEngine, DEVICE_MASTER_CREDENTIALS
-from models import SessionLocal, Device, Shipment, TelemetryRecord
+
+try:
+    from backend.main import app  # type: ignore
+    from backend.crypto_engine import CryptoEngine, DEVICE_MASTER_CREDENTIALS  # type: ignore
+    from backend.models import SessionLocal, Device, Shipment, TelemetryRecord  # type: ignore
+except ImportError:
+    from main import app  # type: ignore
+    from crypto_engine import CryptoEngine, DEVICE_MASTER_CREDENTIALS  # type: ignore
+    from models import SessionLocal, Device, Shipment, TelemetryRecord  # type: ignore
 
 client = TestClient(app)
 

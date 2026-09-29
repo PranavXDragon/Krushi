@@ -15,16 +15,23 @@ if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
 from fastapi.testclient import TestClient
-from main import app
-from crypto_engine import CryptoEngine, DEVICE_MASTER_CREDENTIALS
-from models import SessionLocal, Device, Shipment, TelemetryRecord
+
+try:
+    from backend.main import app  # type: ignore
+    from backend.crypto_engine import CryptoEngine, DEVICE_MASTER_CREDENTIALS  # type: ignore
+    from backend.models import SessionLocal, Device, Shipment, TelemetryRecord  # type: ignore
+    from backend.seed_data import seed_database  # type: ignore
+except ImportError:
+    from main import app  # type: ignore
+    from crypto_engine import CryptoEngine, DEVICE_MASTER_CREDENTIALS  # type: ignore
+    from models import SessionLocal, Device, Shipment, TelemetryRecord  # type: ignore
+    from seed_data import seed_database  # type: ignore
 
 client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def setup_devices():
     """Ensure devices are seeded and active before running tests."""
-    from seed_data import seed_database
     db = SessionLocal()
     try:
         db.query(TelemetryRecord).filter(TelemetryRecord.sequence >= 800000).delete()

@@ -13,5 +13,11 @@
   "C_Cpp.intelliSenseEngine": "disabled",
   "clang.enable": false,
   "clang.diagnostic.enable": false,
-  "clangd.checkProject": false
+  "clangd.checkProject": false,
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/backend"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/backend"
+  ]
 }

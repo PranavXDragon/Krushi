@@ -1,5 +1,5 @@
 #pragma once
-#include <Arduino.h>
+#include "Arduino.h"
 
 // ============================================================================
 // KRUSHI (SIH26232) — Cloud & Edge Telematics Configuration

@@ -14,7 +14,8 @@ import {
   Sparkles,
   ArrowRight,
   Copy,
-  Check
+  Check,
+  Activity
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Shipment, ShipmentEvent, VerificationResult, QRData } from '../types';
@@ -126,7 +127,9 @@ export const TraceabilityView: React.FC<TraceabilityViewProps> = ({
               </div>
               <p className="text-xs opacity-90 mt-1">
                 {isChainValid 
-                  ? `All ${verification?.total_records_checked || 50} sequential telemetry records match their chained SHA-256 digests and ECDSA device signature.`
+                  ? (verification?.total_records_checked ?? 0) === 0
+                    ? 'Hash chain verified. Ready to ingest and cryptographically verify incoming live ESP32 records.'
+                    : `All ${verification?.total_records_checked} sequential telemetry records match their chained SHA-256 digests and ECDSA device signature.`
                   : `A stored telemetry hash failed mathematical verification! The record was modified in storage without private device key.`}
               </p>
             </div>
@@ -135,7 +138,7 @@ export const TraceabilityView: React.FC<TraceabilityViewProps> = ({
           <div className="text-right">
             <div className="text-[11px] font-semibold text-slate-500">Calculated Merkle Root:</div>
             <div className="text-xs font-mono font-bold text-slate-800 bg-white/80 px-2.5 py-1 rounded-lg border border-slate-200 mt-0.5">
-              {verification?.calculated_merkle_root.substring(0, 20)}...
+              {verification?.calculated_merkle_root ? `${verification.calculated_merkle_root.substring(0, 20)}...` : 'Pending Telemetry...'}
             </div>
           </div>
         </div>
@@ -319,6 +322,13 @@ export const TraceabilityView: React.FC<TraceabilityViewProps> = ({
                   </span>
                 </div>
               ))}
+
+              {(!verification?.detailed_checks || verification.detailed_checks.length === 0) && (
+                <div className="py-6 text-center text-xs text-slate-400 bg-slate-50/60 rounded-xl border border-slate-100">
+                  <Activity className="w-5 h-5 mx-auto text-emerald-500 mb-1.5 opacity-60" />
+                  <span>Waiting for first signed telemetry packet from ESP32 node.</span>
+                </div>
+              )}
             </div>
           </div>
 

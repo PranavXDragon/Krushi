@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Thermometer, 
   Droplets, 
@@ -10,12 +10,10 @@ import {
   ShieldAlert,
   Gauge,
   Lock,
-  Layers,
   Wind,
-  CheckCircle2,
-  AlertTriangle,
   Radio,
-  Cpu
+  Cpu,
+  Sparkles
 } from 'lucide-react';
 import { Shipment, TelemetryRecord } from '../types';
 
@@ -29,8 +27,6 @@ export const TruckOverlay: React.FC<TruckOverlayProps> = ({
   shipment,
   latestTelemetry,
 }) => {
-  const [activeZone, setActiveZone] = useState<'A' | 'B'>('A');
-
   const temp = latestTelemetry?.temperature ?? shipment.latest_telemetry?.temperature ?? 4.2;
   const hum = latestTelemetry?.humidity ?? shipment.latest_telemetry?.humidity ?? 78.0;
   const gas = latestTelemetry?.gas_ethylene ?? shipment.latest_telemetry?.gas_ethylene ?? 13.5;
@@ -121,291 +117,230 @@ export const TruckOverlay: React.FC<TruckOverlayProps> = ({
         </div>
       </div>
 
-      {/* 2. Vehicle Digital Twin Canvas (Clean & Unobstructed) */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-b from-slate-50/70 via-slate-100/50 to-slate-200/60 p-5 sm:p-7 border border-slate-200/80 shadow-inner">
+      {/* 2. Vehicle Digital Twin Canvas with In-Trailer X-Ray Compartments */}
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-b from-slate-50/70 via-slate-100/50 to-slate-200/60 p-4 sm:p-6 border border-slate-200/80 shadow-inner">
         
         {/* Ambient Subtle Grid & Illumination */}
         <div className="absolute inset-0 bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.04] pointer-events-none" />
         
-        {/* Interactive Zone Indicator Banners (Cleanly floating above trailer zones) */}
-        <div className="relative max-w-4xl mx-auto">
+        <div className="relative max-w-4xl mx-auto flex flex-col items-center">
           
-          {/* Top Zone Radar Headers */}
-          <div className="flex items-center justify-between px-6 sm:px-16 mb-2">
-            
-            {/* Cab Status Tag */}
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 bg-white/80 backdrop-blur-xs px-2.5 py-1 rounded-full border border-slate-200/80 shadow-2xs">
-              <Cpu className="w-3 h-3 text-slate-600" />
-              <span>Tractor Cab</span>
+          {/* Base Truck Image */}
+          <img
+            src="/truck1.webp"
+            alt="Cold-Chain Reefer Truck"
+            className="w-full h-auto object-contain select-none filter drop-shadow-md transition-all duration-300"
+          />
+
+          {/* In-Trailer Compartment A (Forward Chilled Cargo Chamber) */}
+          <div 
+            className={`absolute top-[9%] left-[34%] w-[29.5%] h-[54%] rounded-xl p-2 sm:p-2.5 flex flex-col justify-between backdrop-blur-md transition-all duration-300 border-2 shadow-sm ${
+              isTempExcursion || isGasExcursion
+                ? 'bg-rose-50/90 border-rose-500 shadow-rose-500/20'
+                : 'bg-white/85 hover:bg-white/95 border-teal-500/80 shadow-teal-500/10'
+            }`}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-1 border-b border-slate-200/70">
+              <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isTempExcursion || isGasExcursion ? 'bg-rose-500 animate-ping' : 'bg-teal-500 animate-pulse'}`} />
+                <span className="text-[10px] sm:text-xs font-bold text-slate-900 truncate">Compartment A</span>
+              </div>
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-teal-50 border border-teal-200 text-teal-800 font-bold flex-shrink-0">
+                {shipment.batch_code}
+              </span>
             </div>
 
-            {/* Zone 1 HUD Callout */}
-            <button
-              onClick={() => setActiveZone('A')}
-              className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer ${
-                activeZone === 'A'
-                  ? 'bg-teal-600 text-white shadow-teal-500/20 scale-105'
-                  : 'bg-white/90 text-slate-700 hover:bg-white border border-slate-200/90'
-              }`}
-            >
-              <span className={`w-2 h-2 rounded-full ${isTempExcursion || isGasExcursion ? 'bg-rose-400 animate-ping' : 'bg-teal-400'}`} />
-              <span>Zone 1: Front Chilled Bay</span>
-              <span className="font-mono text-[11px] opacity-90">({temp.toFixed(1)}°C)</span>
-            </button>
+            {/* Real-time 3-Metric Instrument Grid */}
+            <div className="grid grid-cols-3 gap-1 sm:gap-1.5 my-auto text-center">
+              {/* Temp */}
+              <div className={`p-1 rounded-lg border transition-colors ${
+                isTempExcursion 
+                  ? 'bg-rose-100 border-rose-300 text-rose-900 font-bold' 
+                  : 'bg-slate-50/90 border-slate-200/90 text-slate-800'
+              }`}>
+                <div className="flex items-center justify-center gap-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium">
+                  <Thermometer className="w-2.5 h-2.5 text-teal-600 flex-shrink-0" />
+                  <span>Temp</span>
+                </div>
+                <div className="text-[10px] sm:text-xs font-extrabold font-['Outfit'] mt-0.5 text-slate-900">
+                  {temp.toFixed(1)}°C
+                </div>
+              </div>
 
-            {/* Zone 2 HUD Callout */}
-            <button
-              onClick={() => setActiveZone('B')}
-              className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer ${
-                activeZone === 'B'
-                  ? 'bg-sky-600 text-white shadow-sky-500/20 scale-105'
-                  : 'bg-white/90 text-slate-700 hover:bg-white border border-slate-200/90'
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-sky-400" />
-              <span>Zone 2: Rear Deep Cold</span>
-              <span className="font-mono text-[11px] opacity-90">({tempB.toFixed(1)}°C)</span>
-            </button>
+              {/* Humidity */}
+              <div className="p-1 rounded-lg bg-slate-50/90 border border-slate-200/90 text-slate-800">
+                <div className="flex items-center justify-center gap-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium">
+                  <Droplets className="w-2.5 h-2.5 text-blue-500 flex-shrink-0" />
+                  <span>Hum</span>
+                </div>
+                <div className="text-[10px] sm:text-xs font-extrabold font-['Outfit'] mt-0.5 text-slate-900">
+                  {hum.toFixed(1)}%
+                </div>
+              </div>
 
+              {/* Gas */}
+              <div className={`p-1 rounded-lg border transition-colors ${
+                isGasExcursion 
+                  ? 'bg-rose-100 border-rose-300 text-rose-900 font-bold animate-pulse' 
+                  : 'bg-slate-50/90 border-slate-200/90 text-slate-800'
+              }`}>
+                <div className="flex items-center justify-center gap-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium">
+                  <Flame className="w-2.5 h-2.5 text-amber-500 flex-shrink-0" />
+                  <span>Gas</span>
+                </div>
+                <div className="text-[10px] sm:text-xs font-extrabold font-['Outfit'] mt-0.5 text-slate-900">
+                  {gas.toFixed(1)}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between text-[8px] sm:text-[9px] pt-1 border-t border-slate-200/60 text-slate-600">
+              <span className="font-semibold text-teal-700 truncate">Front Bay · Primary Chilled</span>
+              <span className="font-bold text-slate-700">IoT #01</span>
+            </div>
           </div>
 
-          {/* Truck Render (Full Quality, Zero Ugly Box Occlusions) */}
-          <div className="relative flex flex-col items-center">
-            <img
-              src="/truck1.webp"
-              alt="Reefer Cold-Chain Transport"
-              className="w-full h-auto object-contain select-none filter drop-shadow-md transition-all duration-300"
-            />
-
-            {/* High-Tech Road Dock Pad & Contact Shadow */}
-            <div className="w-full -mt-2.5 h-2 rounded-full bg-gradient-to-r from-transparent via-slate-300/80 to-transparent flex items-center justify-center">
-              <div className="w-3/4 h-[1px] bg-gradient-to-r from-transparent via-teal-500/40 to-transparent" />
+          {/* In-Trailer Compartment B (Rear Deep Cold Chamber) */}
+          <div 
+            className="absolute top-[9%] left-[65.5%] w-[29.5%] h-[54%] rounded-xl p-2 sm:p-2.5 flex flex-col justify-between backdrop-blur-md bg-white/85 hover:bg-white/95 border-2 border-sky-500/80 shadow-sm shadow-sky-500/10 transition-all duration-300"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-1 border-b border-slate-200/70">
+              <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                <span className="w-2 h-2 rounded-full bg-sky-500 flex-shrink-0" />
+                <span className="text-[10px] sm:text-xs font-bold text-slate-900 truncate">Compartment B</span>
+              </div>
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-sky-50 border border-sky-200 text-sky-800 font-bold flex-shrink-0">
+                AG-2402
+              </span>
             </div>
 
-            {/* Zone Framing Brackets along the trailer chassis */}
-            <div className="w-full grid grid-cols-12 gap-2 mt-2 px-4 sm:px-12 text-[10px] text-slate-500">
-              <div className="col-span-4 text-center font-medium">
-                <span className="text-slate-400">Cab & Diesel Engine</span>
+            {/* Real-time 3-Metric Instrument Grid */}
+            <div className="grid grid-cols-3 gap-1 sm:gap-1.5 my-auto text-center">
+              {/* Temp */}
+              <div className="p-1 rounded-lg bg-slate-50/90 border border-slate-200/90 text-slate-800">
+                <div className="flex items-center justify-center gap-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium">
+                  <Thermometer className="w-2.5 h-2.5 text-sky-600 flex-shrink-0" />
+                  <span>Temp</span>
+                </div>
+                <div className="text-[10px] sm:text-xs font-extrabold font-['Outfit'] mt-0.5 text-slate-900">
+                  {tempB.toFixed(1)}°C
+                </div>
               </div>
-              <div className={`col-span-4 border-t-2 pt-1 text-center transition-colors ${
-                activeZone === 'A' ? 'border-teal-500 text-teal-700 font-bold' : 'border-slate-300 text-slate-500'
-              }`}>
-                <span>Forward Compartment (Primary Evaporator)</span>
+
+              {/* Humidity */}
+              <div className="p-1 rounded-lg bg-slate-50/90 border border-slate-200/90 text-slate-800">
+                <div className="flex items-center justify-center gap-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium">
+                  <Droplets className="w-2.5 h-2.5 text-blue-500 flex-shrink-0" />
+                  <span>Hum</span>
+                </div>
+                <div className="text-[10px] sm:text-xs font-extrabold font-['Outfit'] mt-0.5 text-slate-900">
+                  {humB.toFixed(1)}%
+                </div>
               </div>
-              <div className={`col-span-4 border-t-2 pt-1 text-center transition-colors ${
-                activeZone === 'B' ? 'border-sky-500 text-sky-700 font-bold' : 'border-slate-300 text-slate-500'
-              }`}>
-                <span>Aft Compartment (Rear Bulkhead)</span>
+
+              {/* Gas */}
+              <div className="p-1 rounded-lg bg-slate-50/90 border border-slate-200/90 text-slate-800">
+                <div className="flex items-center justify-center gap-0.5 text-[8px] sm:text-[9px] text-slate-500 font-medium">
+                  <Flame className="w-2.5 h-2.5 text-amber-500 flex-shrink-0" />
+                  <span>Gas</span>
+                </div>
+                <div className="text-[10px] sm:text-xs font-extrabold font-['Outfit'] mt-0.5 text-slate-900">
+                  {gasB.toFixed(1)}
+                </div>
               </div>
             </div>
 
+            {/* Footer */}
+            <div className="flex items-center justify-between text-[8px] sm:text-[9px] pt-1 border-t border-slate-200/60 text-slate-600">
+              <span className="font-semibold text-sky-700 truncate">Rear Bay · Secondary Cell</span>
+              <span className="font-bold text-slate-700">IoT #02</span>
+            </div>
+          </div>
+
+          {/* High-Tech Road Dock Pad & Contact Shadow */}
+          <div className="w-full -mt-2 h-2 rounded-full bg-gradient-to-r from-transparent via-slate-300/80 to-transparent flex items-center justify-center">
+            <div className="w-3/4 h-[1px] bg-gradient-to-r from-transparent via-teal-500/40 to-transparent" />
           </div>
 
         </div>
 
       </div>
 
-      {/* 3. Multi-Compartment & Reefer Telematics Control Deck */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* 3. High-Density Telematics & Security Status Strip */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
         
-        {/* Compartment A (Forward Chilled Cargo) */}
-        <div className={`rounded-xl p-4 border transition-all ${
-          activeZone === 'A' 
-            ? 'bg-gradient-to-b from-teal-50/40 to-white border-teal-300 shadow-xs' 
-            : 'bg-white border-slate-200/90'
-        }`}>
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs">
-                A
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900">Forward Chilled Bay</h4>
-                <p className="text-[10px] text-slate-500 font-mono">Node IoT #01 · SHT35 Probe</p>
-              </div>
+        {/* Reefer Unit */}
+        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center">
+              <Gauge className="w-4 h-4" />
             </div>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-              isTempExcursion || isGasExcursion
-                ? 'bg-rose-100 text-rose-700 border border-rose-300 animate-pulse'
-                : 'bg-teal-100 text-teal-800 border border-teal-200'
-            }`}>
-              {isTempExcursion || isGasExcursion ? 'Excursion Alert' : 'Active Cooling'}
-            </span>
+            <div>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block">Reefer Plant</span>
+              <span className="font-bold text-slate-800">Vector 1550 (Cooling)</span>
+            </div>
           </div>
-
-          {/* Real-time Readings */}
-          <div className="grid grid-cols-3 gap-2 mt-3 text-center">
-            
-            <div className={`p-2 rounded-lg border ${
-              isTempExcursion ? 'bg-rose-50 border-rose-300 text-rose-900' : 'bg-slate-50/80 border-slate-200/80'
-            }`}>
-              <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500">
-                <Thermometer className="w-3 h-3 text-teal-600" />
-                <span>Temp</span>
-              </div>
-              <div className="text-sm font-extrabold text-slate-900 font-['Outfit'] mt-0.5">
-                {temp.toFixed(1)}°C
-              </div>
-              <span className="text-[9px] text-slate-500">Set: 4.0°C</span>
-            </div>
-
-            <div className="p-2 rounded-lg bg-slate-50/80 border border-slate-200/80">
-              <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500">
-                <Droplets className="w-3 h-3 text-blue-500" />
-                <span>Humidity</span>
-              </div>
-              <div className="text-sm font-extrabold text-slate-900 font-['Outfit'] mt-0.5">
-                {hum.toFixed(1)}%
-              </div>
-              <span className="text-[9px] text-slate-500">Target &lt;85%</span>
-            </div>
-
-            <div className={`p-2 rounded-lg border ${
-              isGasExcursion ? 'bg-rose-50 border-rose-300 text-rose-900' : 'bg-slate-50/80 border-slate-200/80'
-            }`}>
-              <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500">
-                <Flame className="w-3 h-3 text-amber-500" />
-                <span>Ethylene</span>
-              </div>
-              <div className="text-sm font-extrabold text-slate-900 font-['Outfit'] mt-0.5">
-                {gas.toFixed(1)}
-              </div>
-              <span className="text-[9px] text-slate-500">Limit &lt;50 ppm</span>
-            </div>
-
-          </div>
-
-          {/* Compartment Specifics */}
-          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600">
-            <span>Cargo: <strong className="text-slate-800">350 Crates</strong> ({shipment.batch_code})</span>
-            <span className="text-emerald-700 font-semibold flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-              Sealed
-            </span>
-          </div>
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Auto</span>
         </div>
 
-        {/* Compartment B (Aft Deep Cold Cargo) */}
-        <div className={`rounded-xl p-4 border transition-all ${
-          activeZone === 'B' 
-            ? 'bg-gradient-to-b from-sky-50/40 to-white border-sky-300 shadow-xs' 
-            : 'bg-white border-slate-200/90'
-        }`}>
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs">
-                B
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900">Rear Deep Cold Bay</h4>
-                <p className="text-[10px] text-slate-500 font-mono">Node IoT #02 · SHT35 Probe</p>
-              </div>
+        {/* Air Differential */}
+        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
+              <Wind className="w-4 h-4" />
             </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-sky-100 text-sky-800 border border-sky-200">
-              Set Maintained
-            </span>
+            <div>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block">Discharge vs Return</span>
+              <span className="font-bold text-slate-800 font-mono">ΔT = 0.5°C</span>
+            </div>
           </div>
-
-          {/* Real-time Readings */}
-          <div className="grid grid-cols-3 gap-2 mt-3 text-center">
-            
-            <div className="p-2 rounded-lg bg-slate-50/80 border border-slate-200/80">
-              <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500">
-                <Thermometer className="w-3 h-3 text-sky-600" />
-                <span>Temp</span>
-              </div>
-              <div className="text-sm font-extrabold text-slate-900 font-['Outfit'] mt-0.5">
-                {tempB.toFixed(1)}°C
-              </div>
-              <span className="text-[9px] text-slate-500">Set: 3.5°C</span>
-            </div>
-
-            <div className="p-2 rounded-lg bg-slate-50/80 border border-slate-200/80">
-              <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500">
-                <Droplets className="w-3 h-3 text-blue-500" />
-                <span>Humidity</span>
-              </div>
-              <div className="text-sm font-extrabold text-slate-900 font-['Outfit'] mt-0.5">
-                {humB.toFixed(1)}%
-              </div>
-              <span className="text-[9px] text-slate-500">Target &lt;85%</span>
-            </div>
-
-            <div className="p-2 rounded-lg bg-slate-50/80 border border-slate-200/80">
-              <div className="flex items-center justify-center gap-1 text-[10px] text-slate-500">
-                <Flame className="w-3 h-3 text-amber-500" />
-                <span>Ethylene</span>
-              </div>
-              <div className="text-sm font-extrabold text-slate-900 font-['Outfit'] mt-0.5">
-                {gasB.toFixed(1)}
-              </div>
-              <span className="text-[9px] text-slate-500">Nominal</span>
-            </div>
-
-          </div>
-
-          {/* Compartment Specifics */}
-          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600">
-            <span>Cargo: <strong className="text-slate-800">150 Crates</strong> (AG-2402)</span>
-            <span className="text-emerald-700 font-semibold flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-              Sealed
-            </span>
-          </div>
+          <span className="text-[11px] text-slate-500 font-mono">3.9° / 4.4°</span>
         </div>
 
-        {/* Reefer Engine & Vehicle Telematics */}
-        <div className="rounded-xl p-4 bg-white border border-slate-200/90 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
-                <Gauge className="w-4 h-4 text-slate-700" />
-              </div>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900">Reefer Unit & Telematics</h4>
-                <p className="text-[10px] text-slate-500">Carrier Vector 1550 · Micro-Link</p>
-              </div>
+        {/* Enclosure Tamper */}
+        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <Lock className="w-4 h-4" />
             </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Continuous Run
-            </span>
-          </div>
-
-          <div className="space-y-2 mt-3 text-xs">
-            <div className="flex items-center justify-between py-1 border-b border-slate-50">
-              <span className="text-slate-500 flex items-center gap-1.5">
-                <Wind className="w-3.5 h-3.5 text-slate-400" />
-                Air Differential (ΔT):
-              </span>
-              <span className="font-mono font-semibold text-slate-800">0.5°C (Discharge 3.9°C / Return 4.4°C)</span>
-            </div>
-
-            <div className="flex items-center justify-between py-1 border-b border-slate-50">
-              <span className="text-slate-500 flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-slate-400" />
-                Enclosure Tamper Sensor:
-              </span>
-              <span className="font-semibold text-emerald-700">Sealed & Monitored</span>
-            </div>
-
-            <div className="flex items-center justify-between py-1">
-              <span className="text-slate-500 flex items-center gap-1.5">
-                <Radio className="w-3.5 h-3.5 text-slate-400" />
-                Hardware Identity:
-              </span>
-              <span className="font-mono text-[11px] font-bold text-teal-700">ECDSA SECP256k1</span>
+            <div>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block">Cargo Enclosure</span>
+              <span className="font-bold text-emerald-700">Sealed & Intact</span>
             </div>
           </div>
-
-          <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Route: <strong className="text-slate-700">{shipment.origin.split(',')[0]}</strong> → <strong className="text-slate-700">{shipment.destination.split(',')[0]}</strong></span>
-            <span className="font-semibold text-teal-600">68% Transit</span>
-          </div>
+          <span className="w-2 h-2 rounded-full bg-emerald-500" />
         </div>
 
+        {/* Hardware Node Identity */}
+        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
+              <Cpu className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold block">Node Cryptography</span>
+              <span className="font-mono text-[11px] font-bold text-purple-900">ECDSA SECP256k1</span>
+            </div>
+          </div>
+          <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">Auth</span>
+        </div>
+
+      </div>
+
+      {/* 4. Quick Origin & Destination Footnote */}
+      <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 px-1 pt-1">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+          <span>Active Device: <strong className="text-slate-700">{shipment.device_id || 'AGRITRACE-001'}</strong> (ESP32-S3 + SHT35 + ZE03 Gas Array)</span>
+        </div>
+        <div>
+          Transit: <strong className="text-slate-700">{shipment.origin.split(',')[0]}</strong> → <strong className="text-slate-700">{shipment.destination.split(',')[0]}</strong>
+        </div>
       </div>
 
     </div>
   );
 };
-

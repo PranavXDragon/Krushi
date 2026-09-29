@@ -79,21 +79,21 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
   onShipmentCreated,
   onShowToast
 }) => {
-  const [selectedCrop, setSelectedCrop] = useState(CROP_PRESETS[0]);
-  const [productName, setProductName] = useState(CROP_PRESETS[0].name);
-  const [batchCode, setBatchCode] = useState(`AGRI-${Math.floor(1000 + Math.random() * 9000)}`);
-  const [origin, setOrigin] = useState(CROP_PRESETS[0].defaultOrigin);
-  const [destination, setDestination] = useState(CROP_PRESETS[0].defaultDest);
-  const [carrier, setCarrier] = useState('KisanCold Express Logistics');
-  const [truckPlate, setTruckPlate] = useState('MH-04-AZ-8892');
-  const [driverName, setDriverName] = useState('Ramesh Patil');
-  const [driverPhone, setDriverPhone] = useState('+91 98201 44512');
-  const [compartment, setCompartment] = useState(CROP_PRESETS[0].compartment);
+  const [selectedCrop, setSelectedCrop] = useState<typeof CROP_PRESETS[0] | null>(null);
+  const [productName, setProductName] = useState('');
+  const [batchCode, setBatchCode] = useState('');
+  const [origin, setOrigin] = useState('');
+  const [destination, setDestination] = useState('');
+  const [carrier, setCarrier] = useState('');
+  const [truckPlate, setTruckPlate] = useState('');
+  const [driverName, setDriverName] = useState('');
+  const [driverPhone, setDriverPhone] = useState('');
+  const [compartment, setCompartment] = useState('Compartment A (Chilled Front)');
   const [selectedDeviceId, setSelectedDeviceId] = useState(devices[0]?.id || 'AGRITRACE-001');
   
-  const [minTemp, setMinTemp] = useState(CROP_PRESETS[0].minTemp);
-  const [maxTemp, setMaxTemp] = useState(CROP_PRESETS[0].maxTemp);
-  const [maxGas, setMaxGas] = useState(CROP_PRESETS[0].maxGas);
+  const [minTemp, setMinTemp] = useState<string>('');
+  const [maxTemp, setMaxTemp] = useState<string>('');
+  const [maxGas, setMaxGas] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSelectPreset = (preset: typeof CROP_PRESETS[0]) => {
@@ -102,10 +102,12 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
     setOrigin(preset.defaultOrigin);
     setDestination(preset.defaultDest);
     setCompartment(preset.compartment);
-    setMinTemp(preset.minTemp);
-    setMaxTemp(preset.maxTemp);
-    setMaxGas(preset.maxGas);
-    setBatchCode(`AGRI-${Math.floor(1000 + Math.random() * 9000)}`);
+    setMinTemp(String(preset.minTemp));
+    setMaxTemp(String(preset.maxTemp));
+    setMaxGas(String(preset.maxGas));
+    if (!batchCode) {
+      setBatchCode(`AGRI-${Math.floor(1000 + Math.random() * 9000)}`);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,23 +116,23 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
     try {
       const payload = {
         product_name: productName,
-        batch_code: batchCode,
+        batch_code: batchCode || `AGRI-${Math.floor(1000 + Math.random() * 9000)}`,
         compartment_label: compartment,
         origin,
         destination,
-        carrier,
+        carrier: carrier || 'KisanCold Express Logistics',
         truck_plate: truckPlate,
-        driver_name: driverName,
-        driver_phone: driverPhone,
+        driver_name: driverName || 'Assigned Driver',
+        driver_phone: driverPhone || '+91 98000 00000',
         device_id: selectedDeviceId,
-        min_temp: Number(minTemp),
-        max_temp: Number(maxTemp),
-        max_gas_ethylene: Number(maxGas)
+        min_temp: minTemp !== '' ? Number(minTemp) : 2.0,
+        max_temp: maxTemp !== '' ? Number(maxTemp) : 8.0,
+        max_gas_ethylene: maxGas !== '' ? Number(maxGas) : 45.0
       };
 
       const result = await api.createShipment(payload);
       const newId = result?.shipment_id || result?.id;
-      onShowToast(`Shipment ${batchCode} registered & linked to IoT Node ${selectedDeviceId}!`, 'success');
+      onShowToast(`Shipment ${payload.batch_code} registered & linked to IoT Node ${selectedDeviceId}!`, 'success');
       if (newId) {
         onShipmentCreated(newId);
       }
@@ -182,7 +184,7 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {CROP_PRESETS.map((crop) => {
-            const isSelected = selectedCrop.name === crop.name;
+            const isSelected = selectedCrop?.name === crop.name;
             return (
               <button
                 key={crop.code}
@@ -234,8 +236,9 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
                 type="text"
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
+                placeholder="e.g. Ratnagiri Alphonso Mango"
                 required
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium placeholder:text-slate-400"
               />
             </div>
             <div>
@@ -244,8 +247,9 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
                 type="text"
                 value={batchCode}
                 onChange={(e) => setBatchCode(e.target.value)}
+                placeholder="e.g. AGRI-2026-01"
                 required
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-mono text-emerald-700 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-mono text-emerald-700 font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 placeholder:text-slate-400"
               />
             </div>
             <div>
@@ -283,8 +287,9 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
                 type="text"
                 value={origin}
                 onChange={(e) => setOrigin(e.target.value)}
+                placeholder="e.g. Ratnagiri Orchards, Maharashtra"
                 required
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 placeholder:text-slate-400"
               />
             </div>
             <div>
@@ -296,8 +301,9 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
                 type="text"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
+                placeholder="e.g. APMC Vashi Market, Navi Mumbai"
                 required
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 placeholder:text-slate-400"
               />
             </div>
           </div>
@@ -312,7 +318,8 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
                 type="text"
                 value={carrier}
                 onChange={(e) => setCarrier(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium"
+                placeholder="e.g. KisanCold Express Logistics"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-medium placeholder:text-slate-400"
               />
             </div>
             <div>
@@ -321,8 +328,9 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
                 type="text"
                 value={truckPlate}
                 onChange={(e) => setTruckPlate(e.target.value)}
+                placeholder="e.g. MH-04-AZ-8892"
                 required
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-mono font-bold"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-mono font-bold placeholder:text-slate-400"
               />
             </div>
             <div>
@@ -334,7 +342,8 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
                 type="text"
                 value={driverName}
                 onChange={(e) => setDriverName(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm"
+                placeholder="e.g. Ramesh Patil"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm placeholder:text-slate-400"
               />
             </div>
             <div>
@@ -346,7 +355,8 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
                 type="text"
                 value={driverPhone}
                 onChange={(e) => setDriverPhone(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-mono"
+                placeholder="e.g. +91 98201 44512"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-mono placeholder:text-slate-400"
               />
             </div>
           </div>
@@ -390,8 +400,9 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
                 type="number"
                 step="0.5"
                 value={minTemp}
-                onChange={(e) => setMinTemp(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold font-mono"
+                onChange={(e) => setMinTemp(e.target.value)}
+                placeholder="e.g. 2.0"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 placeholder:text-slate-400 placeholder:font-normal"
               />
             </div>
 
@@ -404,8 +415,9 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
                 type="number"
                 step="0.5"
                 value={maxTemp}
-                onChange={(e) => setMaxTemp(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold font-mono"
+                onChange={(e) => setMaxTemp(e.target.value)}
+                placeholder="e.g. 8.0"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 placeholder:text-slate-400 placeholder:font-normal"
               />
             </div>
 
@@ -418,8 +430,9 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
                 type="number"
                 step="5"
                 value={maxGas}
-                onChange={(e) => setMaxGas(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold font-mono"
+                onChange={(e) => setMaxGas(e.target.value)}
+                placeholder="e.g. 45"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 placeholder:text-slate-400 placeholder:font-normal"
               />
             </div>
           </div>

@@ -3,6 +3,7 @@ import {
   Truck, 
   Radio, 
   AlertTriangle, 
+  CheckCircle2,
   ShieldCheck, 
   MapPin, 
   RefreshCw, 
@@ -89,12 +90,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Open Exceptions</span>
-            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center group-hover:scale-110 transition">
-              <AlertTriangle className="w-4 h-4" />
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center group-hover:scale-110 transition ${
+              openAlerts.length > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'
+            }`}>
+              {openAlerts.length > 0 ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
             </div>
           </div>
-          <div className="text-2xl font-extrabold text-rose-600 font-['Outfit'] mt-2">{openAlerts.length}</div>
-          <span className="text-[11px] text-rose-600 font-semibold mt-1 block">Requires Food Safety Review</span>
+          <div className={`text-2xl font-extrabold font-['Outfit'] mt-2 ${
+            openAlerts.length > 0 ? 'text-rose-600' : 'text-slate-800'
+          }`}>{openAlerts.length}</div>
+          <span className={`text-[11px] font-semibold mt-1 block ${
+            openAlerts.length > 0 ? 'text-rose-600' : 'text-emerald-600'
+          }`}>
+            {openAlerts.length > 0 ? 'Requires Food Safety Review' : 'All Shipments Safe · Normal'}
+          </span>
         </div>
 
         {/* Offline Queue */}
@@ -261,7 +270,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               ))}
 
               {openAlerts.length === 0 && (
-                <p className="text-xs text-slate-500 text-center py-4">No critical exceptions open.</p>
+                <div className="py-5 px-4 text-center rounded-xl bg-emerald-50/60 border border-emerald-100 flex flex-col items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <span className="text-xs font-bold text-slate-800">Zero Critical Exceptions</span>
+                  <span className="text-[11px] text-emerald-700 mt-0.5">All monitored shipments within safe cold-chain limits</span>
+                </div>
               )}
             </div>
           </div>

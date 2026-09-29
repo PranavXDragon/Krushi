@@ -129,9 +129,10 @@ export const CreateShipmentView: React.FC<CreateShipmentViewProps> = ({
       };
 
       const result = await api.createShipment(payload);
+      const newId = result?.shipment_id || result?.id;
       onShowToast(`Shipment ${batchCode} registered & linked to IoT Node ${selectedDeviceId}!`, 'success');
-      if (result && result.id) {
-        onShipmentCreated(result.id);
+      if (newId) {
+        onShipmentCreated(newId);
       }
     } catch (err) {
       console.error(err);

@@ -214,7 +214,7 @@ def get_shipment_by_id(shipment_id: str, db: Session = Depends(get_db)):
     }
 
 @app.post("/api/v1/shipments")
-def create_shipment(payload: ShipmentCreateSchema, db: Session = Depends(get_db)):
+async def create_shipment(payload: ShipmentCreateSchema, db: Session = Depends(get_db)):
     import uuid
     new_id = f"shp-{uuid.uuid4().hex[:8]}"
     shipment = Shipment(
@@ -229,7 +229,7 @@ def create_shipment(payload: ShipmentCreateSchema, db: Session = Depends(get_db)
         truck_plate=payload.truck_plate,
         driver_name=payload.driver_name,
         driver_phone=payload.driver_phone,
-        status="DEVICE_ASSIGNED" if payload.device_id else "CREATED",
+        status="IN_TRANSIT" if payload.device_id else "CREATED",
         created_at=datetime.utcnow(),
         device_id=payload.device_id,
         min_temp=payload.min_temp,
@@ -239,19 +239,36 @@ def create_shipment(payload: ShipmentCreateSchema, db: Session = Depends(get_db)
     )
     db.add(shipment)
     
+    # Bind device to this shipment
+    if payload.device_id:
+        dev = db.query(Device).filter(Device.id == payload.device_id).first()
+        if dev:
+            dev.current_shipment_id = new_id
+            dev.status = "online"
+            dev.last_seen = datetime.utcnow()
+
     # Add initial event
     evt = ShipmentEvent(
         shipment_id=new_id,
         event_type="CREATED",
         title="Shipment Created & Batch Registered",
-        description=f"Batch {payload.batch_code} ({payload.product_name}) registered from {payload.origin} to {payload.destination}.",
+        description=f"Batch {payload.batch_code} ({payload.product_name}) registered from {payload.origin} to {payload.destination} with IoT Node {payload.device_id}.",
         location_name=payload.origin,
         timestamp=datetime.utcnow(),
         severity="info"
     )
     db.add(evt)
     db.commit()
-    return {"status": "created", "shipment_id": new_id}
+
+    await broadcast_telemetry({"type": "SHIPMENT_CREATED", "shipment_id": new_id})
+
+    return {
+        "status": "created",
+        "shipment_id": new_id,
+        "id": new_id,
+        "batch_code": payload.batch_code,
+        "device_id": payload.device_id
+    }
 
 # 2. DEVICES
 @app.get("/api/v1/devices")

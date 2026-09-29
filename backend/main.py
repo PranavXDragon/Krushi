@@ -898,6 +898,42 @@ def corrupt_latest_record_hash(db: Session = Depends(get_db)):
     db.commit()
     return {"status": "corrupted", "sequence": rec.sequence, "message": "Record hash maliciously altered in database"}
 
+@app.post("/api/v1/system/clean-slate")
+async def clean_slate_live(db: Session = Depends(get_db)):
+    """Purges all fake alerts and simulated telemetry so only real ESP32 incoming packets appear."""
+    deleted_alerts = db.query(Alert).delete()
+    deleted_telemetry = db.query(TelemetryRecord).delete()
+    deleted_anchors = db.query(LedgerAnchor).delete()
+    db.query(ShipmentEvent).delete()
+
+    shipments = db.query(Shipment).all()
+    for shp in shipments:
+        shp.status = "IN_TRANSIT"
+        evt = ShipmentEvent(
+            shipment_id=shp.id,
+            event_type="CREATED",
+            title="Shipment Registered & Bound to IoT Node",
+            description=f"Active monitoring initialized for {shp.product_name} ({shp.batch_code}). Waiting for live ESP32 telemetry.",
+            location_name=shp.origin,
+            timestamp=datetime.utcnow(),
+            severity="info"
+        )
+        db.add(evt)
+
+    devices = db.query(Device).all()
+    for dev in devices:
+        dev.status = "online"
+        dev.last_seen = datetime.utcnow()
+
+    db.commit()
+    await broadcast_telemetry({"type": "CLEAN_SLATE_RESET", "message": "Database reset to live data only"})
+    return {
+        "status": "success",
+        "message": "Database reset to clean slate. 0 fake alerts, waiting for live ESP32 packets.",
+        "purged_alerts": deleted_alerts,
+        "purged_telemetry": deleted_telemetry
+    }
+
 # 10. WEBSOCKET FOR LIVE STREAM
 @app.websocket("/ws/telemetry")
 async def websocket_telemetry_endpoint(websocket: WebSocket):

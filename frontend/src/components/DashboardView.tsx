@@ -267,31 +267,38 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Offline-First Proof Feature Highlights */}
-          <div className="bg-slate-900 text-white rounded-2xl p-6 border border-slate-800 shadow-md">
-            <div className="flex items-center gap-2 mb-3">
-              <ShieldCheck className="w-5 h-5 text-teal-400" />
-              <h3 className="text-sm font-bold">Offline-First Trust Guarantees</h3>
+          {/* Offline-First Proof Feature Highlights */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition">
+            <div className="flex items-center gap-3 mb-3.5">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                <ShieldCheck className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Offline-First Trust Guarantees</h3>
+                <span className="text-[10px] text-emerald-700 font-semibold tracking-wide uppercase">Cryptographic Safeguards</span>
+              </div>
             </div>
             
-            <ul className="space-y-2.5 text-xs text-slate-300">
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 mt-1.5 flex-shrink-0" />
+            <ul className="space-y-2.5 text-xs text-slate-600">
+              <li className="flex items-start gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
                 <span>Durable MicroSD/Flash local sequence preservation during 100% network blackout.</span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 mt-1.5 flex-shrink-0" />
+              <li className="flex items-start gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
                 <span>Automatic burst batch sync over MQTT/TLS upon cell tower handover.</span>
               </li>
-              <li className="flex items-start gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 mt-1.5 flex-shrink-0" />
+              <li className="flex items-start gap-2.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
                 <span>SHA-256 hash chaining + Polygon zkEVM proof anchoring for independent audits.</span>
               </li>
             </ul>
 
             <button
               onClick={() => onNavigateTab('traceability')}
-              className="w-full mt-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs transition"
+              className="w-full mt-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition flex items-center justify-center gap-2"
             >
+              <ShieldCheck className="w-4 h-4" />
               Open Traceability Verification
             </button>
           </div>

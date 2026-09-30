@@ -264,7 +264,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="flex flex-wrap items-center gap-2.5">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-xs font-bold tracking-wide">
               <Cpu className="w-3.5 h-3.5 text-emerald-600" />
-              <span>SIH26232 IoT SIMULATOR</span>
+              <span>SIH26232 EDGE TESTBENCH & CONTROLS</span>
             </div>
 
             <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition ${

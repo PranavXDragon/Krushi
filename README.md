@@ -150,6 +150,7 @@ SIH232/
 │   ├── crypto_engine.py      # SHA-256 hash chaining, ECDSA verification & Merkle tree logic
 │   ├── main.py               # FastAPI server, 30+ REST routes, WebSocket broadcaster
 │   ├── models.py             # SQLAlchemy models (Device, Shipment, Telemetry, Alert, LedgerAnchor)
+│   ├── requirements.txt      # Backend Python dependencies
 │   ├── seed_data.py          # Real-world Indian agricultural routes & telemetry seed
 │   ├── simulator.py          # IoT simulator (offline queue, burst sync, tamper injection)
 │   └── supabase_sync.py      # Cloud sync to Supabase PostgreSQL
@@ -186,6 +187,8 @@ SIH232/
 ├── tests/                    # Automated pytest suite (17 tests)
 ├── scripts/                  # Utility scripts (reset, upload)
 ├── screenshots/              # Dashboard & UI captures
+├── start.py                  # Single-command concurrent launcher
+├── start.bat                 # Windows one-click start script
 └── README.md
 ```
 
@@ -204,24 +207,41 @@ git clone https://github.com/PranavXDragon/Krushi.git
 cd Krushi
 ```
 
-### 2. Start the Backend API
+### 2. Single-Command Launch (Recommended)
+Start both the FastAPI backend and React frontend concurrently with one command:
+
+```bash
+python start.py
+```
+*(On Windows, you can also double-click `start.bat`)*
+
+The launcher automatically checks dependencies, boots the FastAPI server (`:8000`), starts Vite (`:5173`), and opens the dashboard in your default browser.
+
+* 📱 **Web Dashboard**: `http://localhost:5173/`
+* 🚀 **Backend REST API**: `http://127.0.0.1:8000`
+* 📖 **Interactive Swagger Docs**: `http://127.0.0.1:8000/docs`
+* ⚡ **WebSocket Stream**: `ws://localhost:8000/ws/telemetry`
+
+---
+
+<details>
+<summary><b>Manual Launch (Separate Terminals)</b></summary>
+
+#### Step A: Start Backend API
 ```bash
 cd backend
-python -m pip install fastapi uvicorn sqlalchemy pydantic python-multipart ecdsa supabase
+python -m pip install -r requirements.txt
 python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
-* Backend API: `http://127.0.0.1:8000`
-* Interactive API Documentation (Swagger): `http://127.0.0.1:8000/docs`
-* WebSocket Telemetry Stream: `ws://localhost:8000/ws/telemetry`
 
-### 3. Start the Frontend Dashboard
-In a separate terminal:
+#### Step B: Start Frontend Dashboard
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-* Dashboard URL: `http://localhost:5173/`
+
+</details>
 
 ---
 

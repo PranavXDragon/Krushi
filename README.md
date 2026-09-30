@@ -32,6 +32,64 @@ AgriTrace solves this by combining:
 
 ---
 
+## 📸 Platform Interface & Screenshots
+
+The AgriTrace web suite provides real-time visibility across logistics operators, farm cooperatives, and end consumers:
+
+### 1. Kisan & Fleet Operations Dashboard
+High-level operational overview displaying live fleet status, rural transit corridor milestones, offline sync health, and Polygon zkEVM ledger verification proofs.
+
+![Kisan & Supply Chain Dashboard](Screenshot/Screenshot%202026-09-30%20135352.png)
+
+* **Key Elements**: Active cargo count, ESP32-S3 mesh node connectivity, blindspot sync status across NH-66 corridor, and live exception counters.
+
+---
+
+### 2. Live Cold-Chain Monitoring & Multi-Compartment Visualizer
+Dual-zone reefer truck overlay mapping micro-climates across physical compartments, coupled with ambient telemetry and solar harvesting stats.
+
+![Live Cold-Chain Monitoring](Screenshot/Screenshot%202026-09-30%20135435.png)
+
+* **Key Elements**: Chamber temperature ($4.2^\circ\text{C}$), relative humidity ($78.3\%$), ripening ethylene gas ($13.1\text{ ppm}$), solar PV power influx ($+315.1\text{ mW}$), and ECDSA hardware authentication status.
+
+---
+
+### 3. Farm-to-Fork Cryptographic Provenance & Audit Explorer
+End-to-end cryptographic verification showing unbroken SHA-256 hash chains, milestone custody timestamps, and decentralized ledger anchor proofs.
+
+![Farm-to-Fork Cryptographic Provenance](Screenshot/Screenshot%202026-09-30%20135450.png)
+
+* **Key Elements**: Verified tamper-proof status badge, calculated shipment Merkle root, Polygon zkEVM transaction hash (`0x7f48...`), block height, and chained digest inspector.
+
+---
+
+### 4. Consumer Transparency & GI-Tag QR Verification
+Direct mobile-scannable QR modal allowing retail buyers and consumers to instantly verify origin, GI certification, and cold-chain compliance.
+
+![Consumer Transparency QR](Screenshot/Screenshot%202026-09-30%20135505.png)
+
+* **Key Elements**: Smartphone-scannable QR code, GI-tagged Ratnagiri Alphonso Mango provenance, cooperative harvest origin, and a 99.4% cold-chain compliance rating.
+
+---
+
+### 5. Real-Time Spoilage & Safety Alerts
+Instant excursion monitoring highlighting critical temperature breaches, ethylene accumulation risks, and hardware disconnect events.
+
+![Safety & Spoilage Alerts](Screenshot/Screenshot%202026-09-30%20135543.png)
+
+* **Key Elements**: Severity-graded warnings (`HIGH_TEMP` at $33.5^\circ\text{C}$, `GAS_ALERT` at $58.4\text{ ppm}$, and offline node timeouts) with direct shipment drill-downs.
+
+---
+
+### 6. Cold-Chain Compliance & Freshness Analytics
+Comprehensive logistics performance analytics, delivery timelines, and hardware reliability metrics.
+
+![Freshness & Quality Analytics](Screenshot/Screenshot%202026-09-30%20135607.png)
+
+* **Key Elements**: Total shipment trends, alert-free delivery percentages, average transit duration, and 99.8% IoT uptime tracking.
+
+---
+
 ## 🏛 System Architecture
 
 ```mermaid
@@ -139,6 +197,7 @@ SIH232/
 │           └── ConsumerVerifyView.tsx # Public verification certificate for QR scan
 ├── docs/
 │   └── ARCHITECTURE_AND_EVALUATION_GUIDE.md  # Detailed SIH judging & technical manual
+├── Screenshot/               # Dashboard and platform telemetry interface captures
 ├── PRD_EXTRACTED.md          # Full Product Requirements Document extracted from MoFPI spec
 └── README.md                 # Primary project documentation
 ```

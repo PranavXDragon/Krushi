@@ -32,6 +32,33 @@ AgriTrace solves this by combining:
 
 ---
 
+## 📸 Application Screenshots & UI Showcase
+
+<p align="center">
+  <img src="Screenshot/Screenshot%202026-09-30%20135435.png" alt="AgriTrace Live Cold-Chain Reefer Monitoring" width="100%" />
+</p>
+
+### 1. Operations & Monitoring Views
+| 🚛 Multi-Compartment Reefer Telemetry | 🌾 Kisan & Supply Chain Overview |
+| :---: | :---: |
+| <img src="Screenshot/Screenshot%202026-09-30%20135435.png" alt="Live Cold-Chain Monitoring" width="100%"/> | <img src="Screenshot/Screenshot%202026-09-30%20135352.png" alt="Kisan & Supply Chain Dashboard" width="100%"/> |
+| *Real-time temperature, humidity, ripening ethylene ($C_2H_4$) & truck compartment mapping* | *Active transit corridors, GPS coordinates, blindspot sync health, and active fleets* |
+
+### 2. Cryptographic Provenance & Verification
+| 🔗 Tamper-Proof Audit & Blockchain Proofs | 📱 Consumer Transparency QR Certificate |
+| :---: | :---: |
+| <img src="Screenshot/Screenshot%202026-09-30%20135450.png" alt="Farm-to-Fork Provenance" width="100%"/> | <img src="Screenshot/Screenshot%202026-09-30%20135505.png" alt="Consumer Transparency QR" width="100%"/> |
+| *SHA-256 hash chaining, Merkle tree root rollup, and Polygon zkEVM smart contract anchor* | *Instant smartphone QR scan for GI-tag compliance and farm-to-fork origin certificate* |
+
+### 3. Excursions & Analytics
+| 🚨 Real-Time Spoilage & Excursion Alerts | 📊 Freshness & Quality Compliance Analytics |
+| :---: | :---: |
+| <img src="Screenshot/Screenshot%202026-09-30%20135543.png" alt="Safety & Spoilage Alerts" width="100%"/> | <img src="Screenshot/Screenshot%202026-09-30%20135607.png" alt="Freshness & Quality Analytics" width="100%"/> |
+| *Critical temperature excursion spikes, ethylene gas alerts, and offline heartbeat tracking* | *Transit compliance scorecards, shipment distribution, and delivery performance metrics* |
+
+---
+
+
 ## 🏛 System Architecture
 
 ```mermaid
@@ -139,6 +166,7 @@ SIH232/
 │           └── ConsumerVerifyView.tsx # Public verification certificate for QR scan
 ├── docs/
 │   └── ARCHITECTURE_AND_EVALUATION_GUIDE.md  # Detailed SIH judging & technical manual
+├── Screenshot/               # Dashboard and platform telemetry interface captures
 ├── PRD_EXTRACTED.md          # Full Product Requirements Document extracted from MoFPI spec
 └── README.md                 # Primary project documentation
 ```

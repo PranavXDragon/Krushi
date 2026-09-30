@@ -236,10 +236,13 @@ bool CloudManager::validateAcknowledgments(
   outAcceptedIds.clear();
   outRejectedIds.clear();
 
+  // Basic sanity validation
   if (responseJson.length() == 0) {
     return false;
   }
 
+  // Check for success status indicators matching KRUSHI API contract:
+  // "verified_ingested", "success", or "duplicate_idempotent"
   bool hasSuccessStatus = (
     responseJson.indexOf("\"verified_ingested\"") != -1 ||
     responseJson.indexOf("\"success\"") != -1 ||
@@ -251,8 +254,10 @@ bool CloudManager::validateAcknowledgments(
     return false;
   }
 
+  // Case 1: Single record response (response confirms single sequence or hash)
   if (sentBatch.size() == 1) {
     const auto& rec = sentBatch[0];
+    // Check if sequence matches or hash matches
     String seqStr = String(rec.sequence);
     if (responseJson.indexOf(seqStr) != -1 || responseJson.indexOf(rec.record_hash.substring(0, 16)) != -1) {
       outAcceptedIds.push_back(rec.record_id);
@@ -260,7 +265,10 @@ bool CloudManager::validateAcknowledgments(
     }
   }
 
+  // Case 2: Batch response with accepted IDs array or all-accepted confirmation
+  // If response contains "accepted_records" or "verified_count"
   for (const auto& rec : sentBatch) {
+    // If specific ID rejected
     if (responseJson.indexOf(rec.record_id) != -1 && responseJson.indexOf("\"rejected\"") != -1) {
       outRejectedIds.push_back(rec.record_id);
     } else {
@@ -272,6 +280,8 @@ bool CloudManager::validateAcknowledgments(
 }
 
 void CloudManager::enterBackoff(const char* reason, Diagnostics& diagnostics) {
+  // Exponential backoff with jitter calculation:
+  // delay = min(MAX_BACKOFF_MS, currentBackoff * 2) + random(0, JITTER_MAX_MS)
   currentBackoffMs = (unsigned long)(currentBackoffMs * BACKOFF_MULTIPLIER);
   if (currentBackoffMs > MAX_BACKOFF_MS) {
     currentBackoffMs = MAX_BACKOFF_MS;

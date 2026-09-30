@@ -114,53 +114,31 @@ graph TD
 
 ---
 
-## 🔐 Cryptographic Specification
+## 🔐 Blockchain & Cryptographic Integrity Architecture
 
-### 1. Canonical Serialization
-To guarantee cross-platform deterministic hashing, telemetry payloads are formatted with strictly ordered keys, no superfluous whitespace, and fixed floating-point precision:
-```json
-{
-  "battery": 94.5,
-  "device_id": "KRUSHI-NODE-001",
-  "gas_ethylene": 13.5,
-  "humidity": 78.0,
-  "latitude": 19.076,
-  "longitude": 72.9982,
-  "previous_hash": "0xabc...",
-  "sequence": 51,
-  "shipment_id": "shp-101",
-  "temperature": 4.2,
-  "timestamp": "2026-09-29T10:00:00Z"
-}
-```
+KRUSHI employs a **3-tier hybrid architecture** to solve the fundamental blockchain dilemma: recording tens of thousands of continuous IoT readings directly on-chain creates storage bloat and latency, while storing them purely in a centralized database lacks verifiable trust.
 
-### 2. Hash Chaining Formula
-Every telemetry reading calculates its cryptographic identity recursively:
+### 3-Tier Integrity Pipeline
+
+| Tier | Component | Mechanism | Cryptographic Guarantee |
+| :--- | :--- | :--- | :--- |
+| **Tier 1: Physical Edge** | IoT Node (ESP32) | Deterministic canonical serialization + recursive SHA-256 hash chaining | Mathematical proof that no sensor reading was altered since capture |
+| **Tier 2: Batch Rollup** | Merkle Rollup Engine | Batches 50–100 sequential readings into a binary Merkle Tree | Compresses thousands of readings into a single 32-byte Merkle Root |
+| **Tier 3: Consortium Ledger** | Hyperledger Fabric | Smart contract (`agritrace_cc`) commits Merkle Root to `agrichannel` | Immutable multi-party endorsement (APEDA Gov + Farmer Co-op + Logistics) |
+
+### Merkle Tree Ledger Anchoring
 
 ```
-Hᵢ = SHA-256( Canonical(
-    DeviceID, ShipmentID, Seqᵢ, Timestamp,
-    Temp, Humidity, Gas, Lat, Lon, Battery, Hᵢ₋₁
-) )
-```
-
-* **Genesis**: `H₀ = GENESIS_ROOT_0000000000000000000000000000000000000000000000000000`
-* **Tamper Detection**: If any historical record is maliciously modified in the database, recomputing the chain immediately flags:
-  ```
-  SHA-256(Recᵢ) ≠ Hᵢ   OR   Hᵢ ≠ PreviousHash(i+1)
-  ```
-
-### 3. Merkle Tree Ledger Anchoring
-Instead of recording every single raw sensor reading on-chain, KRUSHI batches sequences into a binary Merkle tree:
-
-```
-                 [Merkle Root]  ← Anchored on Hyperledger Fabric
+                 [Merkle Root]  ← Anchored to Hyperledger Fabric ('agrichannel')
                   /          \
           [Hash(1,2)]    [Hash(3,4)]
            /      \        /      \
-        [H₁]    [H₂]   [H₃]    [H₄]
+        [H₁]    [H₂]   [H₃]    [H₄]  ← Individual SHA-256 Sensor Reading Hashes
 ```
-The resulting **Merkle Root** is anchored to the Hyperledger Fabric chaincode, providing cryptographic proof for the entire shipment with a single immutable transaction.
+
+* **Instant Tamper Detection**: If any record is modified in the database, recomputing the chain immediately flags:
+  `SHA-256(Recordᵢ) ≠ Hᵢ` or `Hᵢ ≠ PreviousHash(i+1)`, pinpointing the exact corrupted record sequence.
+* **Efficient Inclusion Proofs ($O(\log N)$)**: A buyer scanning a QR code can cryptographically verify that their specific carton's temperature history belongs to the on-chain Merkle Root using just a compact sibling audit path—without needing to download the entire database.
 
 ---
 

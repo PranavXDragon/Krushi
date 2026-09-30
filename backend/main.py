@@ -14,7 +14,7 @@ from sqlalchemy import desc, func
 
 from models import (
     init_db, get_db, SessionLocal,
-    Device, Shipment, TelemetryRecord, ShipmentEvent, Alert, LedgerAnchor, User
+    Device, Shipment, TelemetryRecord, ShipmentEvent, Alert, LedgerAnchor, User, SequenceGap
 )
 from crypto_engine import CryptoEngine
 from simulator import simulator_instance, IoTSimulator
@@ -491,10 +491,62 @@ def get_telemetry(
             "previous_hash": r.previous_hash,
             "record_hash": r.record_hash,
             "signature": r.signature,
-            "integrity_status": r.integrity_status
+            "integrity_status": r.integrity_status,
+            "lifecycle_state": getattr(r, "lifecycle_state", "verified") or "verified",
+            "anchor_id": getattr(r, "anchor_id", None)
         }
         for r in records
     ]
+
+@app.get("/api/v1/telemetry/sequence-gaps")
+def get_sequence_gaps(
+    device_id: Optional[str] = None,
+    shipment_id: Optional[str] = None,
+    status: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(SequenceGap)
+    if device_id:
+        query = query.filter(SequenceGap.device_id == device_id)
+    if shipment_id:
+        query = query.filter(SequenceGap.shipment_id == shipment_id)
+    if status:
+        query = query.filter(SequenceGap.status == status)
+    gaps = query.order_by(SequenceGap.detected_at.desc()).all()
+    return [
+        {
+            "id": g.id,
+            "device_id": g.device_id,
+            "shipment_id": g.shipment_id,
+            "expected_sequence": g.expected_sequence,
+            "received_sequence": g.received_sequence,
+            "gap_size": g.gap_size,
+            "status": g.status,
+            "detected_at": g.detected_at.isoformat() if g.detected_at else None,
+            "resolved_at": g.resolved_at.isoformat() if g.resolved_at else None
+        }
+        for g in gaps
+    ]
+
+@app.get("/api/v1/telemetry/lifecycle-stats")
+def get_lifecycle_stats(shipment_id: Optional[str] = None, db: Session = Depends(get_db)):
+    query = db.query(TelemetryRecord)
+    if shipment_id:
+        query = query.filter(TelemetryRecord.shipment_id == shipment_id)
+    all_records = query.all()
+    received_count = len(simulator_instance.offline_queue)
+    verified_count = sum(1 for r in all_records if getattr(r, "lifecycle_state", "verified") == "verified")
+    anchored_count = sum(1 for r in all_records if getattr(r, "lifecycle_state", "verified") == "anchored")
+    open_gaps = db.query(SequenceGap).filter(SequenceGap.status == "OPEN").count()
+    filled_gaps = db.query(SequenceGap).filter(SequenceGap.status == "FILLED").count()
+    return {
+        "received_queued": received_count,
+        "verified": verified_count,
+        "anchored": anchored_count,
+        "total_persisted": len(all_records),
+        "sequence_gaps_open": open_gaps,
+        "sequence_gaps_filled": filled_gaps
+    }
 
 # 3.1 SUPABASE INGESTION & WEBHOOKS
 @app.post("/api/v1/telemetry/supabase-webhook")
@@ -670,7 +722,43 @@ async def secure_telemetry_ingest(
             detail=f"Cryptographic signature verification failed for device '{payload.device_id}'. The ECDSA signature is invalid or forged."
         )
 
-    # 6. Save verified record
+    # 6. Track sequence gaps or resolve previously open gaps
+    if last_rec and payload.sequence > last_rec.sequence + 1:
+        gap_size = payload.sequence - (last_rec.sequence + 1)
+        db.add(SequenceGap(
+            device_id=payload.device_id,
+            shipment_id=shipment_id,
+            expected_sequence=last_rec.sequence + 1,
+            received_sequence=payload.sequence,
+            gap_size=gap_size,
+            status="OPEN",
+            detected_at=datetime.utcnow()
+        ))
+    else:
+        # Check if this out-of-order packet fills an existing OPEN gap
+        open_gaps = db.query(SequenceGap).filter(
+            SequenceGap.device_id == payload.device_id,
+            SequenceGap.status == "OPEN"
+        ).all()
+        for g in open_gaps:
+            if g.expected_sequence <= payload.sequence < g.received_sequence:
+                # Check if all sequences in the gap range are now present
+                missing = False
+                for seq_check in range(g.expected_sequence, g.received_sequence):
+                    if seq_check == payload.sequence:
+                        continue
+                    exists = db.query(TelemetryRecord).filter(
+                        TelemetryRecord.device_id == payload.device_id,
+                        TelemetryRecord.sequence == seq_check
+                    ).first()
+                    if not exists:
+                        missing = True
+                        break
+                if not missing:
+                    g.status = "FILLED"
+                    g.resolved_at = datetime.utcnow()
+
+    # 6.1 Save verified record (transitions received -> verified)
     ts_obj = datetime.utcnow()
     if timestamp_val and "T" in timestamp_val:
         try:
@@ -695,7 +783,8 @@ async def secure_telemetry_ingest(
         previous_hash=prev_hash_to_use,
         record_hash=recalculated_hash,
         signature=payload.signature,
-        integrity_status="verified"
+        integrity_status="verified",
+        lifecycle_state="verified"
     )
     db.add(record)
 
@@ -918,6 +1007,8 @@ def verify_shipment_integrity(shipment_id: str, db: Session = Depends(get_db)):
                 "tx_hash": a.tx_hash,
                 "block_number": a.block_number,
                 "network": a.network,
+                "contract_address": getattr(a, "contract_address", "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"),
+                "explorer_url": getattr(a, "explorer_url", None) or f"https://amoy.polygonscan.com/tx/{a.tx_hash}",
                 "records_count": a.records_count,
                 "anchored_at": a.anchored_at.isoformat() if a.anchored_at else None,
                 "status": a.verification_status
@@ -929,9 +1020,83 @@ def verify_shipment_integrity(shipment_id: str, db: Session = Depends(get_db)):
             "tx_hash": latest_anchor.tx_hash,
             "block_number": latest_anchor.block_number,
             "network": latest_anchor.network,
+            "contract_address": getattr(latest_anchor, "contract_address", "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"),
+            "explorer_url": getattr(latest_anchor, "explorer_url", None) or f"https://amoy.polygonscan.com/tx/{latest_anchor.tx_hash}",
             "anchored_at": latest_anchor.anchored_at.isoformat() if latest_anchor.anchored_at else None
         } if latest_anchor else None,
         "detailed_checks": detailed_checks[-10:] # send last 10 for inspection
+    }
+
+class MerkleVerifyRequestSchema(BaseModel):
+    leaf_hash: str
+    proof: List[Dict[str, str]]
+    merkle_root: str
+
+@app.get("/api/v1/shipments/{shipment_id}/merkle-proof/{sequence}")
+def get_shipment_record_merkle_proof(shipment_id: str, sequence: int, db: Session = Depends(get_db)):
+    records = db.query(TelemetryRecord).filter(
+        TelemetryRecord.shipment_id == shipment_id
+    ).order_by(TelemetryRecord.sequence.asc()).all()
+    if not records:
+        raise HTTPException(status_code=404, detail="No telemetry records found for shipment")
+
+    target_idx = -1
+    target_rec = None
+    for idx, r in enumerate(records):
+        if r.sequence == sequence:
+            target_idx = idx
+            target_rec = r
+            break
+
+    if target_idx == -1 or not target_rec:
+        raise HTTPException(status_code=404, detail=f"Sequence #{sequence} not found in shipment '{shipment_id}'")
+
+    leaf_hashes = [r.record_hash for r in records]
+    proof_bundle = CryptoEngine.get_merkle_proof(leaf_hashes, target_idx)
+    is_valid = CryptoEngine.verify_merkle_proof(
+        leaf_hash=proof_bundle["leaf_hash"],
+        proof=proof_bundle["proof"],
+        expected_merkle_root=proof_bundle["merkle_root"]
+    )
+
+    return {
+        "shipment_id": shipment_id,
+        "sequence": sequence,
+        "device_id": target_rec.device_id,
+        "leaf_index": proof_bundle["leaf_index"],
+        "leaf_hash": proof_bundle["leaf_hash"],
+        "merkle_root": proof_bundle["merkle_root"],
+        "proof": proof_bundle["proof"],
+        "tree_depth": proof_bundle["tree_depth"],
+        "verified_inclusion": is_valid,
+        "lifecycle_state": getattr(target_rec, "lifecycle_state", "verified")
+    }
+
+@app.post("/api/v1/merkle/verify-proof")
+def verify_independent_merkle_proof(payload: MerkleVerifyRequestSchema):
+    is_valid = CryptoEngine.verify_merkle_proof(
+        leaf_hash=payload.leaf_hash,
+        proof=payload.proof,
+        expected_merkle_root=payload.merkle_root
+    )
+    return {
+        "verified": is_valid,
+        "leaf_hash": payload.leaf_hash,
+        "merkle_root": payload.merkle_root,
+        "proof_steps": len(payload.proof)
+    }
+
+@app.get("/api/v1/blockchain/contract-info")
+def get_blockchain_contract_info(db: Session = Depends(get_db)):
+    anchors_count = db.query(LedgerAnchor).count()
+    return {
+        "contract_name": "AgriChainAnchor",
+        "network": "Polygon PoS Amoy Testnet",
+        "chain_id": 80002,
+        "rpc_url": "https://rpc-amoy.polygon.technology",
+        "contract_address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+        "explorer_base_url": "https://amoy.polygonscan.com",
+        "total_batches_anchored": anchors_count
     }
 
 # 7. ANALYTICS

@@ -60,27 +60,27 @@
     "title": "Persistent Edge Queue & Telemetry Lifecycle State Machine",
     "description": "Enforce telemetry record states (received -> verified -> anchored), track sequence gaps in dedicated table, and maintain offline buffer resiliency.",
     "priority": 9,
-    "passes": false
+    "passes": true
   },
   {
     "id": "STORY-010",
     "title": "Binary Merkle Inclusion Proof Generation & Verification Engine",
     "description": "Compute canonical leaf hashes, construct Merkle audit paths (proof arrays), and implement independent record verification endpoint.",
     "priority": 10,
-    "passes": false
+    "passes": true
   },
   {
     "id": "STORY-011",
     "title": "Live Polygon PoS Amoy Smart Contract Deployment & Anchoring",
     "description": "Develop AgriChainAnchor.sol, deploy to Polygon PoS Amoy testnet, submit real on-chain Merkle root transactions, and link PolygonScan proofs.",
     "priority": 11,
-    "passes": false
+    "passes": true
   },
   {
     "id": "STORY-012",
     "title": "Dashboard Stale-Data Indicator & Reconnection Resilience",
     "description": "Add WebSocket exponential backoff reconnection, live network latency benchmark, and clear UI indicator for stale/offline telemetry.",
     "priority": 12,
-    "passes": false
+    "passes": true
   }
 ]

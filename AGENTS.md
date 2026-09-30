@@ -27,3 +27,12 @@ This guide documents patterns, conventions, and reusable engineering practices e
 - **No Direct Anon Inserts**: Direct table insertions using public `anon` API keys are revoked in Supabase RLS (`scripts/supabase_hardened_rls.sql`). All telemetry must transit through `/api/v1/telemetry/secure-ingest`.
 - **Anti-Impersonation Enforcement**: Devices are tied to `current_shipment_id`. Any cross-shipment submission is rejected with 403 Forbidden to prevent compromised truck nodes from polluting rival shipment logs.
 - **Device Credential Tokens**: Ingestion gateway supports dual-mode token delivery (via `X-Device-Token` HTTP header or payload `device_token`).
+
+## 5. Telemetry Lifecycle & Sequence Gap Reconciliation
+- **Lifecycle State Machine**: Every telemetry packet progresses strictly through `received` (persistent offline buffer `.offline_edge_queue.json`) -> `verified` (canonical SHA-256 + ECDSA verified in database) -> `anchored` (batched into a Merkle root on Polygon PoS Amoy).
+- **Sequence Gap Tracking**: Out-of-order sequence numbers create `SequenceGap(status="OPEN")` records in `sequence_gaps`. Subsequent burst syncs or out-of-order deliveries automatically transition resolved gaps to `FILLED`.
+
+## 6. Binary Merkle Inclusion Proofs & On-Chain Anchoring
+- **Audit Paths**: `CryptoEngine.get_merkle_proof` and `CryptoEngine.verify_merkle_proof` normalize `0x` prefixes and generate `O(log N)` sibling inclusion paths verifiable via `/api/v1/shipments/{shipment_id}/merkle-proof/{sequence}` and `/api/v1/merkle/verify-proof`.
+- **Smart Contract**: `contracts/AgriChainAnchor.sol` anchors batch Merkle roots on Polygon PoS Amoy Testnet (Chain ID `80002`) with direct PolygonScan transaction links.
+

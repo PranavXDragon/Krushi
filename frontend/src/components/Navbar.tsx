@@ -36,6 +36,10 @@ interface NavbarProps {
   onOpenSignIn?: () => void;
   onOpenSignUp?: () => void;
   onSignOut?: () => void;
+  wsStatus?: 'connected' | 'reconnecting' | 'offline';
+  wsLatencyMs?: number;
+  isStaleData?: boolean;
+  isNodeOnline?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -52,7 +56,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   user,
   onOpenSignIn,
   onOpenSignUp,
-  onSignOut
+  onSignOut,
+  wsStatus = 'connected',
+  wsLatencyMs = 12,
+  isStaleData = false,
+  isNodeOnline = true
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -328,6 +336,39 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             </div>
           )}
+        </div>
+
+        {/* Live Telemetry Stream & Latency / Stale-Data Indicator (STORY-012) */}
+        <div
+          className={`hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold transition ${
+            !isNodeOnline || isStaleData || wsStatus !== 'connected'
+              ? 'bg-amber-50 text-amber-800 border-amber-200'
+              : 'bg-slate-50 text-slate-600 border-slate-200'
+          }`}
+          title={
+            !isNodeOnline
+              ? 'Edge Node in offline queuing mode (Stale live stream)'
+              : wsStatus !== 'connected'
+              ? 'WebSocket reconnecting with exponential backoff'
+              : `Live WebSocket Telemetry Stream (${wsLatencyMs}ms RTT)`
+          }
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              !isNodeOnline || isStaleData || wsStatus !== 'connected'
+                ? 'bg-amber-500 animate-ping'
+                : 'bg-emerald-500'
+            }`}
+          />
+          <span>
+            {!isNodeOnline
+              ? 'Offline Buffer Active'
+              : wsStatus !== 'connected'
+              ? 'Reconnecting WS...'
+              : isStaleData
+              ? 'Stale Telemetry (>30s)'
+              : `Live · ${wsLatencyMs}ms`}
+          </span>
         </div>
 
         {/* Action Icons */}

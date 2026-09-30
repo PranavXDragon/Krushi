@@ -90,6 +90,20 @@ class TelemetryRecord(Base):
     record_hash = Column(String, index=True)
     signature = Column(String)
     integrity_status = Column(String, default="verified") # verified, pending, failed
+    lifecycle_state = Column(String, default="verified") # received, verified, anchored
+    anchor_id = Column(Integer, ForeignKey("ledger_anchors.id"), nullable=True)
+
+class SequenceGap(Base):
+    __tablename__ = "sequence_gaps"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    device_id = Column(String, ForeignKey("devices.id"), index=True)
+    shipment_id = Column(String, ForeignKey("shipments.id"), index=True, nullable=True)
+    expected_sequence = Column(Integer, nullable=False)
+    received_sequence = Column(Integer, nullable=False)
+    gap_size = Column(Integer, nullable=False)
+    status = Column(String, default="OPEN") # OPEN, FILLED
+    detected_at = Column(DateTime, default=datetime.utcnow)
+    resolved_at = Column(DateTime, nullable=True)
 
 class ShipmentEvent(Base):
     __tablename__ = "shipment_events"
@@ -128,7 +142,9 @@ class LedgerAnchor(Base):
     merkle_root = Column(String, unique=True)
     tx_hash = Column(String, unique=True)
     block_number = Column(Integer)
-    network = Column(String, default="Polygon zkEVM / AgriChain Testnet")
+    network = Column(String, default="Polygon PoS Amoy Testnet (Chain ID 80002)")
+    contract_address = Column(String, default="0x742d35Cc6634C0532925a3b844Bc454e4438f44e")
+    explorer_url = Column(String, nullable=True)
     records_count = Column(Integer)
     start_sequence = Column(Integer)
     end_sequence = Column(Integer)
@@ -139,12 +155,20 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     # Auto-migration for schema extensions
     from sqlalchemy import text
+    migrations = [
+        "ALTER TABLE devices ADD COLUMN auth_token TEXT DEFAULT 'krushi_tok_agritrace_001_sec2026'",
+        "ALTER TABLE telemetry ADD COLUMN lifecycle_state TEXT DEFAULT 'verified'",
+        "ALTER TABLE telemetry ADD COLUMN anchor_id INTEGER",
+        "ALTER TABLE ledger_anchors ADD COLUMN contract_address TEXT DEFAULT '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'",
+        "ALTER TABLE ledger_anchors ADD COLUMN explorer_url TEXT"
+    ]
     with engine.connect() as conn:
-        try:
-            conn.execute(text("ALTER TABLE devices ADD COLUMN auth_token TEXT DEFAULT 'krushi_tok_agritrace_001_sec2026'"))
-            conn.commit()
-        except Exception:
-            pass # Column already exists
+        for sql in migrations:
+            try:
+                conn.execute(text(sql))
+                conn.commit()
+            except Exception:
+                pass # Column already exists
 
 def get_db():
     db = SessionLocal()
@@ -152,3 +176,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Ensure schema & auto-migrations are applied on module import
+init_db()
+

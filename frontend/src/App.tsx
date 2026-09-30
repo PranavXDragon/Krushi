@@ -125,29 +125,108 @@ export function App() {
     return () => clearInterval(interval);
   }, [loadData]);
 
-  // Connect WebSocket for live push updates
+  // WebSocket & Stale Data Resilience State (STORY-012)
+  const [wsStatus, setWsStatus] = useState<'connected' | 'reconnecting' | 'offline'>('connected');
+  const [wsLatencyMs, setWsLatencyMs] = useState<number>(12);
+  const [lastSyncTimestamp, setLastSyncTimestamp] = useState<number>(Date.now());
+  const [isStaleData, setIsStaleData] = useState<boolean>(false);
+
+  // Connect WebSocket with Exponential Backoff Reconnection & Ping/Pong Latency Benchmark
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8000/ws/telemetry');
-    
-    ws.onmessage = (event) => {
+    let ws: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let pingInterval: ReturnType<typeof setInterval> | null = null;
+    let retryAttempt = 0;
+    let unmounted = false;
+    let lastPingSentAt = 0;
+
+    const connectWebSocket = () => {
+      if (unmounted) return;
       try {
-        const msg = JSON.parse(event.data);
-        if (msg.type === 'NEW_TELEMETRY') {
-          setTelemetryList(prev => [...prev, msg.data]);
-        } else if (msg.type === 'NETWORK_STATE_CHANGED') {
-          setIsNodeOnline(msg.is_online);
-        } else {
-          loadData();
-        }
-      } catch (e) {
-        // ignore raw text
+        ws = new WebSocket('ws://localhost:8000/ws/telemetry');
+
+        ws.onopen = () => {
+          if (unmounted) return;
+          retryAttempt = 0;
+          setWsStatus('connected');
+          setLastSyncTimestamp(Date.now());
+          setIsStaleData(false);
+
+          // Start periodic ping/pong latency benchmark
+          if (pingInterval) clearInterval(pingInterval);
+          pingInterval = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              lastPingSentAt = performance.now();
+              ws.send('ping');
+            }
+          }, 5000);
+        };
+
+        ws.onmessage = (event) => {
+          if (unmounted) return;
+          setLastSyncTimestamp(Date.now());
+          setIsStaleData(false);
+
+          if (event.data === 'pong') {
+            if (lastPingSentAt > 0) {
+              const rtt = Math.max(1, Math.round(performance.now() - lastPingSentAt));
+              setWsLatencyMs(rtt);
+            }
+            return;
+          }
+
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'NEW_TELEMETRY') {
+              setTelemetryList(prev => [...prev, msg.data]);
+            } else if (msg.type === 'NETWORK_STATE_CHANGED') {
+              setIsNodeOnline(msg.is_online);
+            } else {
+              loadData();
+            }
+          } catch {
+            // ignore raw text
+          }
+        };
+
+        ws.onclose = () => {
+          if (unmounted) return;
+          if (pingInterval) clearInterval(pingInterval);
+          setWsStatus('reconnecting');
+          const backoffMs = Math.min(15000, 1000 * Math.pow(2, retryAttempt));
+          retryAttempt += 1;
+          reconnectTimer = setTimeout(connectWebSocket, backoffMs);
+        };
+
+        ws.onerror = () => {
+          if (ws) ws.close();
+        };
+      } catch {
+        setWsStatus('offline');
+        const backoffMs = Math.min(15000, 1000 * Math.pow(2, retryAttempt));
+        retryAttempt += 1;
+        reconnectTimer = setTimeout(connectWebSocket, backoffMs);
       }
     };
 
+    connectWebSocket();
+
+    // Stale data monitor (flags stale if > 30s without sync or when node is offline)
+    const staleMonitor = setInterval(() => {
+      const elapsed = Date.now() - lastSyncTimestamp;
+      if (elapsed > 30000 || !isNodeOnline) {
+        setIsStaleData(true);
+      }
+    }, 4000);
+
     return () => {
-      ws.close();
+      unmounted = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (pingInterval) clearInterval(pingInterval);
+      clearInterval(staleMonitor);
+      if (ws) ws.close();
     };
-  }, [loadData]);
+  }, [loadData, isNodeOnline, lastSyncTimestamp]);
 
   const activeShipment = shipments.find(s => s.id === selectedShipmentId) || shipments[0] || {
     id: '04beaccb-7c55-44ab-aa84-2a3f338dcf1c',
@@ -248,6 +327,10 @@ export function App() {
               setAuthModalOpen(true);
             }}
             onSignOut={handleSignOut}
+            wsStatus={wsStatus}
+            wsLatencyMs={wsLatencyMs}
+            isStaleData={isStaleData}
+            isNodeOnline={isNodeOnline}
           />
 
           {/* Page Body */}

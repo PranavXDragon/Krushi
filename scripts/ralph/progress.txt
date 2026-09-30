@@ -70,4 +70,51 @@
   - Direct database writes from IoT nodes using shared anonymous client keys bypass all application-level invariant checks and replay protection. Routing all writes through an authenticated gateway proxy ensures unified sequence verification, tamper detection, and RLS enforcement.
   - Anti-impersonation validation requires cross-referencing the device's persistent assignment in the registry against incoming route metadata before allowing telemetry writes.
 
+## 2026-09-30 - STORY-009 - Persistent Edge Queue & Telemetry Lifecycle State Machine
+- What was implemented:
+  - Added `lifecycle_state` (`received -> verified -> anchored`) and `anchor_id` to `TelemetryRecord` plus `SequenceGap` table in `backend/models.py`.
+  - Implemented durable file-backed edge queue persistence (`backend/.offline_edge_queue.json`) in `backend/simulator.py`.
+  - Added sequence gap detection (`OPEN`) and out-of-order/burst fill resolution (`FILLED`) in `/api/v1/telemetry/secure-ingest` and `/api/v1/telemetry/sequence-gaps`.
+- Files changed:
+  - backend/models.py
+  - backend/simulator.py
+  - backend/main.py
+  - tests/test_remaining_stories.py
+- **Learnings:**
+  - Tracking sequence gaps explicitly in a dedicated table allows out-of-order edge packets arriving via burst sync to automatically reconcile gaps from `OPEN` to `FILLED`.
 
+## 2026-09-30 - STORY-010 - Binary Merkle Inclusion Proof Generation & Verification Engine
+- What was implemented:
+  - Added `CryptoEngine.get_merkle_proof` and `CryptoEngine.verify_merkle_proof` in `backend/crypto_engine.py`.
+  - Exposed `/api/v1/shipments/{shipment_id}/merkle-proof/{sequence}` and `/api/v1/merkle/verify-proof` in `backend/main.py`.
+- Files changed:
+  - backend/crypto_engine.py
+  - backend/main.py
+  - tests/test_remaining_stories.py
+- **Learnings:**
+  - Normalizing `0x` prefixes across leaf hashes and sibling nodes ensures O(log N) Merkle inclusion proofs verify deterministically regardless of caller formatting.
+
+## 2026-09-30 - STORY-011 - Live Polygon PoS Amoy Smart Contract Deployment & Anchoring
+- What was implemented:
+  - Created `contracts/AgriChainAnchor.sol` smart contract for Polygon PoS Amoy (Chain ID 80002).
+  - Linked PolygonScan Amoy verification URLs (`https://amoy.polygonscan.com/tx/...`) and contract metadata in `LedgerAnchor` and `/api/v1/blockchain/contract-info`.
+- Files changed:
+  - contracts/AgriChainAnchor.sol
+  - backend/models.py
+  - backend/simulator.py
+  - backend/main.py
+  - tests/test_remaining_stories.py
+- **Learnings:**
+  - Storing `contract_address` and `explorer_url` alongside each `LedgerAnchor` record provides direct verifiable links for consumer QR certificates and auditors.
+
+## 2026-09-30 - STORY-012 - Dashboard Stale-Data Indicator & Reconnection Resilience
+- What was implemented:
+  - Added exponential backoff WebSocket reconnection (`1s -> 2s -> 4s -> max 15s`), periodic `ping`/`pong` RTT latency measurement, and stale data detection in `frontend/src/App.tsx`.
+  - Integrated live connection status and latency indicator pill into `frontend/src/components/Navbar.tsx` and embedded the `SIH26232 IoT SIMULATOR` controls directly into `frontend/src/components/DashboardView.tsx`.
+- Files changed:
+  - frontend/src/App.tsx
+  - frontend/src/components/Navbar.tsx
+  - frontend/src/components/DashboardView.tsx
+  - tests/test_remaining_stories.py
+- **Learnings:**
+  - Combining WebSocket `ping`/`pong` heartbeats with a 30-second staleness watchdog immediately surfaces offline blindspots or dropped connections to operators.

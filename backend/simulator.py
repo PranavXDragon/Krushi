@@ -9,11 +9,18 @@ Supports interactive SIH26232 presentation features:
 """
 
 import asyncio
+import json
+import os
 import random
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
-from models import SessionLocal, Device, Shipment, TelemetryRecord, ShipmentEvent, Alert, LedgerAnchor
+from models import SessionLocal, Device, Shipment, TelemetryRecord, ShipmentEvent, Alert, LedgerAnchor, SequenceGap
 from crypto_engine import CryptoEngine
+
+OFFLINE_QUEUE_PATH = os.environ.get(
+    "OFFLINE_QUEUE_PATH",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), ".offline_edge_queue.json")
+)
 
 class IoTSimulator:
     def __init__(self):
@@ -37,6 +44,28 @@ class IoTSimulator:
         self.solar_harvesting = True
 
         self._sync_last_hash_from_db()
+        self._load_persistent_queue()
+
+    def _load_persistent_queue(self):
+        try:
+            if os.path.exists(OFFLINE_QUEUE_PATH):
+                with open(OFFLINE_QUEUE_PATH, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list) and data:
+                        self.offline_queue = data
+                        last_q = self.offline_queue[-1]
+                        if last_q.get("sequence", 0) > self.current_sequence:
+                            self.current_sequence = last_q["sequence"]
+                            self.last_hash = last_q.get("record_hash", self.last_hash)
+        except Exception:
+            pass
+
+    def _save_persistent_queue(self):
+        try:
+            with open(OFFLINE_QUEUE_PATH, "w", encoding="utf-8") as f:
+                json.dump(self.offline_queue, f, indent=2)
+        except Exception:
+            pass
 
     def _sync_last_hash_from_db(self):
         db = SessionLocal()
@@ -130,8 +159,10 @@ class IoTSimulator:
         reading = self.generate_single_reading()
         
         if not self.is_network_online:
-            # Device stores in local offline buffer
+            # Device stores in local persistent offline buffer
+            reading["lifecycle_state"] = "received"
             self.offline_queue.append(reading)
+            self._save_persistent_queue()
             return {
                 "action": "queued_offline",
                 "record": reading,
@@ -141,6 +172,7 @@ class IoTSimulator:
             # Ingest directly to DB
             db = SessionLocal()
             try:
+                reading["lifecycle_state"] = "verified"
                 rec_db = TelemetryRecord(
                     device_id=reading["device_id"],
                     shipment_id=reading["shipment_id"],
@@ -158,7 +190,8 @@ class IoTSimulator:
                     previous_hash=reading["previous_hash"],
                     record_hash=reading["record_hash"],
                     signature=reading["signature"],
-                    integrity_status="verified"
+                    integrity_status="verified",
+                    lifecycle_state="verified"
                 )
                 db.add(rec_db)
                 
@@ -244,10 +277,21 @@ class IoTSimulator:
                     previous_hash=q_rec["previous_hash"],
                     record_hash=q_rec["record_hash"],
                     signature=q_rec["signature"],
-                    integrity_status="verified"
+                    integrity_status="verified",
+                    lifecycle_state="verified"
                 )
                 db.add(rec_db)
                 self._check_and_create_alerts(db, q_rec)
+
+            # Mark any open sequence gaps covered by this batch as FILLED
+            open_gaps = db.query(SequenceGap).filter(
+                SequenceGap.device_id == self.device_id,
+                SequenceGap.status == "OPEN"
+            ).all()
+            for gap in open_gaps:
+                if first_seq <= gap.expected_sequence and last_seq >= gap.expected_sequence:
+                    gap.status = "FILLED"
+                    gap.resolved_at = datetime.utcnow()
 
             # Record Sync Recovery Event
             evt = ShipmentEvent(
@@ -272,6 +316,7 @@ class IoTSimulator:
 
             db.commit()
             self.offline_queue.clear()
+            self._save_persistent_queue()
         finally:
             db.close()
 
@@ -459,7 +504,9 @@ class IoTSimulator:
                 merkle_root=merkle_root,
                 tx_hash=random_tx,
                 block_number=block_num,
-                network="Polygon zkEVM / AgriChain Trust Network",
+                network="Polygon PoS Amoy Testnet (Chain ID 80002)",
+                contract_address="0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+                explorer_url=f"https://amoy.polygonscan.com/tx/{random_tx}",
                 records_count=len(records),
                 start_sequence=records[0].sequence,
                 end_sequence=records[-1].sequence,
@@ -467,12 +514,18 @@ class IoTSimulator:
                 verification_status="ANCHORED_VALID"
             )
             db.add(anchor)
+            db.flush()
+
+            # Transition all anchored telemetry records from verified -> anchored
+            for r in records:
+                r.lifecycle_state = "anchored"
+                r.anchor_id = anchor.id
 
             evt = ShipmentEvent(
                 shipment_id=self.shipment_id,
                 event_type="CHECKPOINT",
                 title=f"Decentralized Ledger Proof Anchored (Block #{block_num})",
-                description=f"Merkle Root {merkle_root[:18]}... anchored to Polygon zkEVM with {len(records)} verified records.",
+                description=f"Merkle Root {merkle_root[:18]}... anchored to Polygon PoS Amoy Testnet with {len(records)} verified records.",
                 location_name="Blockchain Trust Layer",
                 latitude=self.current_lat,
                 longitude=self.current_lon,
@@ -485,11 +538,14 @@ class IoTSimulator:
 
             return {
                 "status": "anchored",
+                "anchor_id": anchor.id,
                 "merkle_root": merkle_root,
                 "tx_hash": random_tx,
                 "block_number": block_num,
                 "records_count": len(records),
-                "network": "Polygon zkEVM / AgriChain Trust Network"
+                "network": "Polygon PoS Amoy Testnet (Chain ID 80002)",
+                "contract_address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+                "explorer_url": f"https://amoy.polygonscan.com/tx/{random_tx}"
             }
         finally:
             db.close()

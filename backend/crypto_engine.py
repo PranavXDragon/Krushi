@@ -199,8 +199,9 @@ class CryptoEngine:
             genesis = hashlib.sha256(b"GENESIS").hexdigest()
             return f"0x{genesis}", [[genesis]]
 
-        tree = [leaf_hashes]
-        current_level = leaf_hashes
+        normalized_leaves = [h[2:] if h.startswith("0x") else h for h in leaf_hashes]
+        tree = [normalized_leaves]
+        current_level = normalized_leaves
 
         while len(current_level) > 1:
             next_level = []
@@ -214,3 +215,59 @@ class CryptoEngine:
 
         merkle_root = f"0x{current_level[0]}"
         return merkle_root, tree
+
+    @staticmethod
+    def get_merkle_proof(leaf_hashes: List[str], target_index: int) -> Dict[str, Any]:
+        """
+        Generates a binary Merkle inclusion audit path (proof array) for leaf at `target_index`.
+        Each proof step specifies {"position": "left" | "right", "sibling_hash": "<hex>"}.
+        """
+        if not leaf_hashes or target_index < 0 or target_index >= len(leaf_hashes):
+            raise ValueError("Invalid leaf index or empty leaf list")
+
+        merkle_root, tree = CryptoEngine.build_merkle_tree(leaf_hashes)
+        proof: List[Dict[str, str]] = []
+        idx = target_index
+
+        for level in tree[:-1]:
+            if idx % 2 == 0:
+                sibling_idx = idx + 1 if idx + 1 < len(level) else idx
+                proof.append({
+                    "position": "right",
+                    "sibling_hash": level[sibling_idx]
+                })
+            else:
+                sibling_idx = idx - 1
+                proof.append({
+                    "position": "left",
+                    "sibling_hash": level[sibling_idx]
+                })
+            idx //= 2
+
+        target_leaf = leaf_hashes[target_index]
+        clean_leaf = target_leaf[2:] if target_leaf.startswith("0x") else target_leaf
+        return {
+            "leaf_index": target_index,
+            "leaf_hash": clean_leaf,
+            "merkle_root": merkle_root,
+            "proof": proof,
+            "tree_depth": len(tree)
+        }
+
+    @staticmethod
+    def verify_merkle_proof(leaf_hash: str, proof: List[Dict[str, str]], expected_merkle_root: str) -> bool:
+        """
+        Independently verifies a binary Merkle inclusion proof for a given leaf hash against expected_merkle_root.
+        """
+        current = leaf_hash[2:] if leaf_hash.startswith("0x") else leaf_hash
+        for step in proof:
+            sibling = step["sibling_hash"]
+            sibling_clean = sibling[2:] if sibling.startswith("0x") else sibling
+            if step.get("position") == "left":
+                current = hashlib.sha256(f"{sibling_clean}{current}".encode("utf-8")).hexdigest()
+            else:
+                current = hashlib.sha256(f"{current}{sibling_clean}".encode("utf-8")).hexdigest()
+
+        clean_root = expected_merkle_root[2:] if expected_merkle_root.startswith("0x") else expected_merkle_root
+        return current.lower() == clean_root.lower()
+

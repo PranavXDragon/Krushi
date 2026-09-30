@@ -397,10 +397,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <span className="font-mono text-teal-700 font-semibold">GPS: 19.0760° N, 72.9982° E</span>
             </div>
 
-            <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4 py-4">
-              {/* Connecting line */}
-              <div className="hidden md:block absolute left-4 right-4 top-1/2 -translate-y-1/2 h-1 bg-slate-200 z-0" />
-
+            <div className="relative flex flex-col md:flex-row items-start justify-between gap-4 py-4">
               {waypoints.map((wp, idx) => (
                 <div key={wp.name} className="relative z-10 flex md:flex-col items-center gap-2 md:text-center w-full md:w-28">
                   <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs shadow-xs ${

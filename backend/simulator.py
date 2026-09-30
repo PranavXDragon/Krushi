@@ -498,26 +498,30 @@ class IoTSimulator:
             random_tx = "0x" + "".join(random.choices("0123456789abcdef", k=64))
             block_num = 18492000 + random.randint(100, 999)
 
-            anchor = LedgerAnchor(
-                shipment_id=self.shipment_id,
-                batch_code="AG-2401",
-                merkle_root=merkle_root,
-                tx_hash=random_tx,
-                block_number=block_num,
-                network="Hyperledger Fabric (Channel: agrichannel, CC: agritrace_cc)",
-                contract_address="agrichannel:agritrace_cc:v1.0",
-                channel_id="agrichannel",
-                chaincode_id="agritrace_cc",
-                endorsement_peers="peer0.apeda-gov.krushi.net, peer0.farmer-coop.krushi.net, peer0.logistics.krushi.net",
-                explorer_url=f"http://fabric-explorer.krushi.net/tx/{random_tx}",
-                records_count=len(records),
-                start_sequence=records[0].sequence,
-                end_sequence=records[-1].sequence,
-                anchored_at=datetime.utcnow(),
-                verification_status="ANCHORED_VALID"
-            )
-            db.add(anchor)
-            db.flush()
+            existing_anchor = db.query(LedgerAnchor).filter_by(merkle_root=merkle_root).first()
+            if existing_anchor:
+                anchor = existing_anchor
+            else:
+                anchor = LedgerAnchor(
+                    shipment_id=self.shipment_id,
+                    batch_code="AG-2401",
+                    merkle_root=merkle_root,
+                    tx_hash=random_tx,
+                    block_number=block_num,
+                    network="Hyperledger Fabric (Channel: agrichannel, CC: agritrace_cc)",
+                    contract_address="agrichannel:agritrace_cc:v1.0",
+                    channel_id="agrichannel",
+                    chaincode_id="agritrace_cc",
+                    endorsement_peers="peer0.apeda-gov.krushi.net, peer0.farmer-coop.krushi.net, peer0.logistics.krushi.net",
+                    explorer_url=f"http://fabric-explorer.krushi.net/tx/{random_tx}",
+                    records_count=len(records),
+                    start_sequence=records[0].sequence,
+                    end_sequence=records[-1].sequence,
+                    anchored_at=datetime.utcnow(),
+                    verification_status="ANCHORED_VALID"
+                )
+                db.add(anchor)
+                db.flush()
 
             # Transition all anchored telemetry records from verified -> anchored
             for r in records:

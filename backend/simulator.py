@@ -493,7 +493,7 @@ class IoTSimulator:
             leaf_hashes = [r.record_hash for r in records]
             merkle_root, _ = CryptoEngine.build_merkle_tree(leaf_hashes)
             
-            # Generate simulated polygon transaction
+            # Generate simulated Hyperledger Fabric transaction ID
             random_tx = f"0x{CryptoEngine.canonical_json({'root': merkle_root, 't': datetime.utcnow().isoformat()})[:60]}"
             random_tx = "0x" + "".join(random.choices("0123456789abcdef", k=64))
             block_num = 18492000 + random.randint(100, 999)
@@ -504,9 +504,12 @@ class IoTSimulator:
                 merkle_root=merkle_root,
                 tx_hash=random_tx,
                 block_number=block_num,
-                network="Polygon PoS Amoy Testnet (Chain ID 80002)",
-                contract_address="0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-                explorer_url=f"https://amoy.polygonscan.com/tx/{random_tx}",
+                network="Hyperledger Fabric (Channel: agrichannel, CC: agritrace_cc)",
+                contract_address="agrichannel:agritrace_cc:v1.0",
+                channel_id="agrichannel",
+                chaincode_id="agritrace_cc",
+                endorsement_peers="peer0.apeda-gov.krushi.net, peer0.farmer-coop.krushi.net, peer0.logistics.krushi.net",
+                explorer_url=f"http://fabric-explorer.krushi.net/tx/{random_tx}",
                 records_count=len(records),
                 start_sequence=records[0].sequence,
                 end_sequence=records[-1].sequence,
@@ -525,7 +528,7 @@ class IoTSimulator:
                 shipment_id=self.shipment_id,
                 event_type="CHECKPOINT",
                 title=f"Decentralized Ledger Proof Anchored (Block #{block_num})",
-                description=f"Merkle Root {merkle_root[:18]}... anchored to Polygon PoS Amoy Testnet with {len(records)} verified records.",
+                description=f"Merkle Root {merkle_root[:18]}... anchored to Hyperledger Fabric (agrichannel) with {len(records)} verified records.",
                 location_name="Blockchain Trust Layer",
                 latitude=self.current_lat,
                 longitude=self.current_lon,
@@ -543,9 +546,12 @@ class IoTSimulator:
                 "tx_hash": random_tx,
                 "block_number": block_num,
                 "records_count": len(records),
-                "network": "Polygon PoS Amoy Testnet (Chain ID 80002)",
-                "contract_address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-                "explorer_url": f"https://amoy.polygonscan.com/tx/{random_tx}"
+                "network": "Hyperledger Fabric (Channel: agrichannel, CC: agritrace_cc)",
+                "contract_address": "agrichannel:agritrace_cc:v1.0",
+                "channel_id": "agrichannel",
+                "chaincode_id": "agritrace_cc",
+                "endorsement_peers": "peer0.apeda-gov.krushi.net, peer0.farmer-coop.krushi.net, peer0.logistics.krushi.net",
+                "explorer_url": f"http://fabric-explorer.krushi.net/tx/{random_tx}"
             }
         finally:
             db.close()

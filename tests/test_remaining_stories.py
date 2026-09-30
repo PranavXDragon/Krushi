@@ -2,7 +2,7 @@
 Automated Test Suite for STORY-009, STORY-010, STORY-011, and STORY-012:
 - STORY-009: Persistent Edge Queue & Telemetry Lifecycle State Machine (received -> verified -> anchored) & SequenceGap tracking
 - STORY-010: Binary Merkle Inclusion Proof Generation & Independent Verification Engine
-- STORY-011: Polygon PoS Amoy Smart Contract Metadata & Anchoring Proof Verification
+- STORY-011: Hyperledger Fabric Chaincode Metadata & Anchoring Proof Verification
 - STORY-012: WebSocket Ping/Pong Latency & Reconnection Resilience
 """
 
@@ -11,19 +11,20 @@ import sys
 from datetime import datetime
 from fastapi.testclient import TestClient
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend")))
 
-from main import app
-from models import SessionLocal, Device, Shipment, TelemetryRecord, SequenceGap, LedgerAnchor, init_db
-from crypto_engine import CryptoEngine, DEVICE_MASTER_CREDENTIALS
-from simulator import IoTSimulator
+from backend.main import app
+from backend.models import SessionLocal, Device, Shipment, TelemetryRecord, SequenceGap, LedgerAnchor, init_db
+from backend.crypto_engine import CryptoEngine, DEVICE_MASTER_CREDENTIALS
+from backend.simulator import IoTSimulator
 
 client = TestClient(app)
 
 
 def setup_module(module):
     init_db()
-    from seed_data import seed_database
+    from backend.seed_data import seed_database
     db = SessionLocal()
     try:
         if db.query(Shipment).count() == 0:
@@ -202,26 +203,26 @@ def test_story_010_merkle_inclusion_proof_generation_and_verification():
     assert bad_res.json()["verified"] is False
 
 
-def test_story_011_polygon_amoy_contract_and_anchoring():
+def test_story_011_hyperledger_fabric_chaincode_and_anchoring():
     """
-    Verifies AgriChainAnchor.sol contract existence, contract-info endpoint, and lifecycle transition to 'anchored'.
+    Verifies agritrace_anchor.go chaincode existence, contract-info endpoint, and lifecycle transition to 'anchored'.
     """
-    contract_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "contracts", "AgriChainAnchor.sol"))
-    assert os.path.exists(contract_path)
+    chaincode_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "blockchain", "chaincode", "agritrace_anchor.go"))
+    assert os.path.exists(chaincode_path)
 
     info_res = client.get("/api/v1/blockchain/contract-info")
     assert info_res.status_code == 200
     info = info_res.json()
-    assert info["contract_name"] == "AgriChainAnchor"
-    assert info["chain_id"] == 80002
-    assert "amoy.polygonscan.com" in info["explorer_base_url"]
+    assert info["contract_name"] == "AgriTraceContract (Chaincode)"
+    assert info["channel_id"] == "agrichannel"
+    assert "fabric-explorer.krushi.net" in info["explorer_base_url"]
 
     # Anchor batch and verify lifecycle_state transitions to 'anchored'
     anchor_res = client.post("/api/v1/simulation/anchor-blockchain")
     assert anchor_res.status_code == 200
     anchor_data = anchor_res.json()
     assert anchor_data["status"] == "anchored"
-    assert "amoy.polygonscan.com/tx/" in anchor_data["explorer_url"]
+    assert "fabric-explorer.krushi.net/tx/" in anchor_data["explorer_url"]
 
     stats_res = client.get("/api/v1/telemetry/lifecycle-stats?shipment_id=04beaccb-7c55-44ab-aa84-2a3f338dcf1c")
     assert stats_res.status_code == 200

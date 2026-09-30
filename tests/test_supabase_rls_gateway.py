@@ -9,23 +9,15 @@ import sys
 import os
 import pytest
 
-# Add backend directory to sys.path
-backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend"))
-if backend_dir not in sys.path:
-    sys.path.insert(0, backend_dir)
+# Add project root to sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend")))
 
 from fastapi.testclient import TestClient
-
-try:
-    from backend.main import app  # type: ignore
-    from backend.crypto_engine import CryptoEngine, DEVICE_MASTER_CREDENTIALS  # type: ignore
-    from backend.models import SessionLocal, Device, Shipment, TelemetryRecord  # type: ignore
-    from backend.seed_data import seed_database  # type: ignore
-except ImportError:
-    from main import app  # type: ignore
-    from crypto_engine import CryptoEngine, DEVICE_MASTER_CREDENTIALS  # type: ignore
-    from models import SessionLocal, Device, Shipment, TelemetryRecord  # type: ignore
-    from seed_data import seed_database  # type: ignore
+from backend.main import app
+from backend.crypto_engine import CryptoEngine, DEVICE_MASTER_CREDENTIALS
+from backend.models import SessionLocal, Device, Shipment, TelemetryRecord
+from backend.seed_data import seed_database
 
 client = TestClient(app)
 

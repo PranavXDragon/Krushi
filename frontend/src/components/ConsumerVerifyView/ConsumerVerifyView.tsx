@@ -310,7 +310,7 @@ export const ConsumerVerifyView: React.FC<ConsumerVerifyViewProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Cryptographic Anchor</h3>
-                  <p className="text-[11px] text-slate-500">Polygon zkEVM Testnet</p>
+                  <p className="text-[11px] text-slate-500">Hyperledger Fabric Ledger</p>
                 </div>
               </div>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100">

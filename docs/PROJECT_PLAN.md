@@ -48,7 +48,7 @@ Deliver an affordable (< ₹3,500 BOM), rugged, offline-first IoT sensing and bl
 * **Task 3.1**: Implement canonical JSON serializer with sorted keys and normalized floating-point numbers.
 * **Task 3.2**: Develop recursive SHA-256 hash chaining engine ($H_i = \text{SHA256}(\dots, H_{i-1})$).
 * **Task 3.3**: Develop fast audit verification algorithm that identifies broken chain links and sequence anomalies.
-* **Task 3.4**: Implement binary Merkle Tree builder and automated transaction generation for Polygon zkEVM / AgriChain testnet.
+* **Task 3.4**: Implement binary Merkle Tree builder and automated transaction generation for Hyperledger Fabric chaincode on `agrichannel`.
 
 ### Phase 4: Backend Telemetry Service & Real-Time Streaming
 * **Task 4.1**: Build FastAPI backend with SQLAlchemy relational models (`Device`, `Shipment`, `TelemetryRecord`, `Alert`, `LedgerAnchor`).
@@ -92,7 +92,7 @@ Deliver an affordable (< ₹3,500 BOM), rugged, offline-first IoT sensing and bl
 | **SIM7600E 4G LTE/GPS Module** | 1 | Telemetry transmission & geo-location | Ready / Simulated |
 | **Solar Panel (5V 2W) + CN3065** | 1 | Photovoltaic energy harvesting test | Ready / Simulated |
 | **Local SQLite & Cloud Postgres** | 1 | Telemetry database | Configured |
-| **Polygon zkEVM Testnet RPC** | 1 | Decentralized ledger anchor verification | Configured |
+| **Hyperledger Fabric Network** | 1 | Decentralized ledger anchor verification | Configured |
 
 ---
 

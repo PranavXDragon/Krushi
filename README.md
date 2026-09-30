@@ -13,7 +13,7 @@ AgriTrace solves this by combining:
 1. **Low-Cost Rugged IoT Sensor Nodes** with local cryptographic flash storage and solar energy harvesting.
 2. **Offline-First Local Queuing & Monotonic Chaining**, ensuring zero data loss during rural transit blind spots.
 3. **SHA-256 Hash Chaining & Instant Tamper Detection**, mathematically guaranteeing data integrity from the physical node.
-4. **Decentralized Ledger Anchoring (Merkle Trees)**, aggregating sensor batches onto Polygon zkEVM / AgriChain testnet without prohibitive gas costs.
+4. **Decentralized Ledger Anchoring (Merkle Trees)**, aggregating sensor batches onto a Hyperledger Fabric permissioned ledger without public gas costs.
 5. **Truck-Centric Multi-Compartment Visualization & Consumer QR Provenance**, providing clear operational views for logistics operators and trustworthy verification for consumers.
 
 ---
@@ -35,25 +35,25 @@ AgriTrace solves this by combining:
 ## 📸 Application Screenshots & UI Showcase
 
 <p align="center">
-  <img src="Screenshot/Screenshot%202026-09-30%20135435.png" alt="AgriTrace Live Cold-Chain Reefer Monitoring" width="100%" />
+  <img src="screenshots/Screenshot%202026-09-30%20135435.png" alt="AgriTrace Live Cold-Chain Reefer Monitoring" width="100%" />
 </p>
 
 ### 1. Operations & Monitoring Views
 | 🚛 Multi-Compartment Reefer Telemetry | 🌾 Kisan & Supply Chain Overview |
 | :---: | :---: |
-| <img src="Screenshot/Screenshot%202026-09-30%20135435.png" alt="Live Cold-Chain Monitoring" width="100%"/> | <img src="Screenshot/Screenshot%202026-09-30%20135352.png" alt="Kisan & Supply Chain Dashboard" width="100%"/> |
+| <img src="screenshots/Screenshot%202026-09-30%20135435.png" alt="Live Cold-Chain Monitoring" width="100%"/> | <img src="screenshots/Screenshot%202026-09-30%20135352.png" alt="Kisan & Supply Chain Dashboard" width="100%"/> |
 | *Real-time temperature, humidity, ripening ethylene ($C_2H_4$) & truck compartment mapping* | *Active transit corridors, GPS coordinates, blindspot sync health, and active fleets* |
 
 ### 2. Cryptographic Provenance & Verification
 | 🔗 Tamper-Proof Audit & Blockchain Proofs | 📱 Consumer Transparency QR Certificate |
 | :---: | :---: |
-| <img src="Screenshot/Screenshot%202026-09-30%20135450.png" alt="Farm-to-Fork Provenance" width="100%"/> | <img src="Screenshot/Screenshot%202026-09-30%20135505.png" alt="Consumer Transparency QR" width="100%"/> |
-| *SHA-256 hash chaining, Merkle tree root rollup, and Polygon zkEVM smart contract anchor* | *Instant smartphone QR scan for GI-tag compliance and farm-to-fork origin certificate* |
+| <img src="screenshots/Screenshot%202026-09-30%20135450.png" alt="Farm-to-Fork Provenance" width="100%"/> | <img src="screenshots/Screenshot%202026-09-30%20135505.png" alt="Consumer Transparency QR" width="100%"/> |
+| *SHA-256 hash chaining, Merkle tree root rollup, and Hyperledger Fabric chaincode anchor* | *Instant smartphone QR scan for GI-tag compliance and farm-to-fork origin certificate* |
 
 ### 3. Excursions & Analytics
 | 🚨 Real-Time Spoilage & Excursion Alerts | 📊 Freshness & Quality Compliance Analytics |
 | :---: | :---: |
-| <img src="Screenshot/Screenshot%202026-09-30%20135543.png" alt="Safety & Spoilage Alerts" width="100%"/> | <img src="Screenshot/Screenshot%202026-09-30%20135607.png" alt="Freshness & Quality Analytics" width="100%"/> |
+| <img src="screenshots/Screenshot%202026-09-30%20135543.png" alt="Safety & Spoilage Alerts" width="100%"/> | <img src="screenshots/Screenshot%202026-09-30%20135607.png" alt="Freshness & Quality Analytics" width="100%"/> |
 | *Critical temperature excursion spikes, ethylene gas alerts, and offline heartbeat tracking* | *Transit compliance scorecards, shipment distribution, and delivery performance metrics* |
 
 ---
@@ -95,7 +95,7 @@ graph TD
     end
 
     subgraph Blockchain_Layer["Decentralized Ledger"]
-        SMART_CONTRACT["AgriChain Anchor Contract<br/>(Polygon zkEVM / EVM)"]
+        SMART_CONTRACT["AgriTrace Chaincode<br/>(Hyperledger Fabric)"]
         MERKLE_ENGINE -->|Anchors Merkle Root| SMART_CONTRACT
     end
 
@@ -105,7 +105,10 @@ graph TD
         VERIFIER["Cryptographic Chain Explorer"]
         QR_VIEW["Consumer Verification Certificate"]
         
-        FASTAPI <-->|WebSocket & REST| Frontend_App
+        FASTAPI <-->|WebSocket & REST| DASHBOARD
+        FASTAPI <-->|WebSocket & REST| TRUCK_VIEW
+        FASTAPI <-->|WebSocket & REST| VERIFIER
+        FASTAPI <-->|WebSocket & REST| QR_VIEW
     end
 ```
 
@@ -116,21 +119,45 @@ graph TD
 ### 1. Canonical Serialization
 To guarantee cross-platform deterministic hashing, telemetry payloads are formatted with strictly ordered keys, no superfluous whitespace, and fixed floating-point precision:
 ```json
-{"battery":94.5,"device_id":"AGRITRACE-001","gas_ethylene":13.5,"humidity":78.0,"latitude":19.076,"longitude":72.9982,"previous_hash":"0xabc...","sequence":51,"shipment_id":"shp-101","temperature":4.2,"timestamp":"2026-09-29T10:00:00Z"}
+{
+  "battery": 94.5,
+  "device_id": "AGRITRACE-001",
+  "gas_ethylene": 13.5,
+  "humidity": 78.0,
+  "latitude": 19.076,
+  "longitude": 72.9982,
+  "previous_hash": "0xabc...",
+  "sequence": 51,
+  "shipment_id": "shp-101",
+  "temperature": 4.2,
+  "timestamp": "2026-09-29T10:00:00Z"
+}
 ```
 
 ### 2. Hash Chaining Formula
 Every telemetry reading calculates its cryptographic identity recursively:
-$$H_i = \text{SHA-256}\Big(\text{Canonical}\big(DeviceID, ShipmentID, Seq_i, Timestamp, T, H, G, Lat, Lon, Batt, H_{i-1}\big)\Big)$$
 
-* Where $H_0 = \text{GENESIS\_ROOT\_000000000000000000000000000000000000000000000000000000000000}$
-* If any historical record is maliciously modified in the database, recomputing the chain immediately flags:
-  $$\text{SHA-256}(Rec_i) \neq H_i \quad \text{or} \quad H_i \neq PreviousHash_{i+1}$$
+```
+Hᵢ = SHA-256( Canonical( DeviceID, ShipmentID, Seqᵢ, Timestamp, Temp, Humidity, Gas, Lat, Lon, Battery, Hᵢ₋₁ ) )
+```
+
+* **Genesis**: `H₀ = GENESIS_ROOT_0000000000000000000000000000000000000000000000000000`
+* **Tamper Detection**: If any historical record is maliciously modified in the database, recomputing the chain immediately flags:
+  ```
+  SHA-256(Recᵢ) ≠ Hᵢ   OR   Hᵢ ≠ PreviousHash(i+1)
+  ```
 
 ### 3. Merkle Tree Ledger Anchoring
-Instead of incurring high transaction fees by recording every single raw sensor reading on-chain, AgriTrace batches sequences into a binary Merkle tree:
-$$\text{Merkle Root} = \text{Hash}\Big(\dots \text{Hash}\big(\text{Hash}(H_1, H_2), \text{Hash}(H_3, H_4)\big) \dots\Big)$$
-The resulting **Merkle Root** is anchored to the smart contract, providing cryptographic proof for the entire shipment with a single immutable transaction.
+Instead of recording every single raw sensor reading on-chain, AgriTrace batches sequences into a binary Merkle tree:
+
+```
+                 [Merkle Root]  ← Anchored on Hyperledger Fabric
+                  /          \
+          [Hash(1,2)]    [Hash(3,4)]
+           /      \        /      \
+        [H₁]    [H₂]   [H₃]    [H₄]
+```
+The resulting **Merkle Root** is anchored to the Hyperledger Fabric chaincode, providing cryptographic proof for the entire shipment with a single immutable transaction.
 
 ---
 
@@ -139,36 +166,46 @@ The resulting **Merkle Root** is anchored to the smart contract, providing crypt
 ```
 SIH232/
 ├── backend/
-│   ├── agritrace.db          # Embedded SQLite database with sample seed data
-│   ├── crypto_engine.py      # SHA-256 hash chaining, verification & Merkle tree logic
-│   ├── main.py               # FastAPI server, REST routes, WebSocket broadcaster
-│   ├── models.py             # SQLAlchemy models (Device, Shipment, Telemetry, Alert, Anchor)
+│   ├── crypto_engine.py      # SHA-256 hash chaining, ECDSA verification & Merkle tree logic
+│   ├── main.py               # FastAPI server, 30+ REST routes, WebSocket broadcaster
+│   ├── models.py             # SQLAlchemy models (Device, Shipment, Telemetry, Alert, LedgerAnchor)
 │   ├── seed_data.py          # Real-world Indian agricultural routes & telemetry seed
-│   └── simulator.py          # IoT simulator (offline queue, burst sync, tamper injection)
+│   ├── simulator.py          # IoT simulator (offline queue, burst sync, tamper injection)
+│   └── supabase_sync.py      # Cloud sync to Supabase PostgreSQL
+├── blockchain/
+│   ├── chaincode/
+│   │   └── agritrace_anchor.go  # Hyperledger Fabric chaincode (Go)
+│   ├── security/
+│   │   ├── supabase_hardened_rls.sql  # Row-Level Security policies
+│   │   └── supabase_setup_quickstart.sql
+│   └── README.md             # Fabric consortium topology & endorsement policy
+├── iot-device/
+│   ├── KRUSHI_ESP32_SINGLE.ino  # Primary ESP32 production firmware
+│   ├── config.h              # Hardware configuration & TLS certificates
+│   ├── cloud_manager.h/.cpp  # HTTPS transmission & retry logic
+│   ├── network_manager.h     # WiFi/4G LTE connectivity management
+│   ├── storage_manager.h     # Non-volatile flash queue (offline-first)
+│   └── diagnostics.h         # System health & battery monitoring
 ├── frontend/
-│   ├── index.html            # Vite HTML entry point
-│   ├── package.json          # Node dependencies (React 19, Recharts, Lucide, QRCode)
-│   ├── tailwind.config.js    # Tailwind styling config
-│   ├── vite.config.ts        # Vite configuration
 │   └── src/
 │       ├── App.tsx           # Main application shell with WebSocket listener
-│       ├── types/            # TypeScript interfaces
-│       ├── services/api.ts   # REST client connecting to backend
-│       └── components/
-│           ├── SimulationBar.tsx      # Quick controls for SIH judge demonstrations
-│           ├── MonitoringView.tsx     # Real-time metrics & temperature/humidity charts
-│           ├── TruckOverlay.tsx       # Physical reefer compartment visualizer
-│           ├── TraceabilityView.tsx   # Blockchain ledger & hash chain explorer
-│           ├── DashboardView.tsx      # High-level fleet overview & stats
-│           ├── AlertsView.tsx         # Excursion management (acknowledge/resolve)
-│           ├── AnalyticsView.tsx      # Cold-chain compliance & quality scorecards
-│           ├── ShipmentsView.tsx      # Manifest & route tracking
-│           └── ConsumerVerifyView.tsx # Public verification certificate for QR scan
-├── docs/
-│   └── ARCHITECTURE_AND_EVALUATION_GUIDE.md  # Detailed SIH judging & technical manual
-├── Screenshot/               # Dashboard and platform telemetry interface captures
-├── PRD_EXTRACTED.md          # Full Product Requirements Document extracted from MoFPI spec
-└── README.md                 # Primary project documentation
+│       ├── services/api.ts   # REST/WebSocket client
+│       ├── types/index.ts    # TypeScript interfaces
+│       └── components/       # 14 modular view components
+│           ├── DashboardView/     # Fleet overview, KPIs & simulation controls
+│           ├── MonitoringView/    # Real-time sensor charts
+│           ├── TruckOverlay/      # Reefer compartment visualizer
+│           ├── TraceabilityView/  # Blockchain ledger & hash chain explorer
+│           ├── ConsumerVerifyView/ # Public QR verification certificate
+│           ├── AlertsView/        # Excursion management
+│           ├── AnalyticsView/     # Compliance scorecards
+│           ├── ShipmentsView/     # Manifest & route tracking
+│           └── ...                # + Navbar, Sidebar, AuthModal, etc.
+├── docs/                     # Architecture guide, security roadmap, specs
+├── tests/                    # Automated pytest suite (17 tests)
+├── scripts/                  # Utility scripts (reset, upload)
+├── screenshots/              # Dashboard & UI captures
+└── README.md
 ```
 
 ---
@@ -182,14 +219,14 @@ SIH232/
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/PranavXDragon/SIHP2.git
-cd SIHP2
+git clone https://github.com/PranavXDragon/Krushi.git
+cd Krushi
 ```
 
 ### 2. Start the Backend API
 ```bash
 cd backend
-python -m pip install fastapi uvicorn sqlalchemy pydantic
+python -m pip install fastapi uvicorn sqlalchemy pydantic python-multipart ecdsa supabase
 python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 ```
 * Backend API: `http://127.0.0.1:8000`

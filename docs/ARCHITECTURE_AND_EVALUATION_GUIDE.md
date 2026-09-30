@@ -15,7 +15,7 @@
 | **4. Offline-First Continuity** | Non-volatile circular flash buffer with monotonic sequence counter ($Seq_i$) to prevent gaps during rural transit. | `simulator.py` (`IoTSimulator.offline_queue`, sequence enforcement) |
 | **5. Cryptographic Storage** | Deterministic canonical serialization + recursive SHA-256 hash chaining ($H_i = \text{SHA256}(\dots, H_{i-1})$). | `backend/crypto_engine.py` (`CryptoEngine.verify_hash_chain`) |
 | **6. Auto-Sync Reconnection** | Lightweight MQTT burst transmission with idempotent deduplication upon cellular reacquisition. | `main.py` (`/api/v1/simulation/batch-sync`), `SimulationBar.tsx` |
-| **7. Decentralized Ledger Anchoring**| Periodic Merkle tree batching anchored to EVM/Polygon zkEVM smart contract to eliminate raw gas costs. | `backend/crypto_engine.py` (`build_merkle_tree`), `models.py` (`LedgerAnchor`) |
+| **7. Decentralized Ledger Anchoring**| Periodic Merkle tree batching anchored to Hyperledger Fabric chaincode to eliminate public gas costs. | `backend/crypto_engine.py` (`build_merkle_tree`), `models.py` (`LedgerAnchor`) |
 | **8. Energy Harvesting & Battery** | Solar photovoltaic trickle charger paired with 3.2V LiFePO4 cells to sustain multi-day routes autonomously. | `simulator.py` (solar power model), `TruckOverlay.tsx` (solar monitor) |
 | **9. Truck Compartment Visualization**| Multi-zone reefer cargo visualization isolating temperature anomalies to physical compartments. | `frontend/src/components/TruckOverlay.tsx` |
 | **10. Downstream Consumer QR** | Instant scan certificate delivering provenance, GI-tag details, cold-chain compliance, and blockchain TX hash. | `frontend/src/components/ConsumerVerifyView.tsx`, `TraceabilityView.tsx` |
@@ -89,7 +89,7 @@ Where:
 ### Merkle Tree Proof Aggregation
 To anchor $N$ telemetry samples to the blockchain without paying $N \times \text{gas fees}$, AgriTrace groups samples into a binary Merkle tree:
 ```
-                     [ Merkle Root ]  <--- Anchored on Polygon zkEVM
+                     [ Merkle Root ]  <--- Anchored on Hyperledger Fabric
                          /      \
                [ Node 1-2 ]    [ Node 3-4 ]
                  /      \        /      \

@@ -130,7 +130,7 @@ Streaming at `ws://localhost:8000/ws/telemetry`.
     "merkle_root": "0x8fa12c9b4e3d7a10f65c92841b83d09a7e6b5c4d3e2f1a09b8c7d6e5f4a3b2c1",
     "tx_hash": "0x7f4b821908471209384710293847102938471029384710293847102938471029",
     "block_number": 18920441,
-    "network": "Polygon zkEVM / AgriChain Testnet",
+    "network": "Hyperledger Fabric (Channel: agrichannel)",
     "records_count": 50,
     "start_sequence": 1,
     "end_sequence": 50,
@@ -196,7 +196,7 @@ Returns complete cryptographic verification report:
     "merkle_root": "0x8fa12c9b4e3d7a...",
     "tx_hash": "0x7f4b8219...",
     "block_number": 18920441,
-    "network": "Polygon zkEVM / AgriChain Testnet",
+    "network": "Hyperledger Fabric (Channel: agrichannel)",
     "records_count": 50,
     "anchored_at": "2026-09-29T09:30:00"
   },
@@ -237,7 +237,7 @@ https://agritrace.gov.in/verify/04beaccb-7c55-44ab-aa84-2a3f338dcf1c
   "cold_chain_compliance_score": 99.4,
   "excursions_count": 0,
   "ledger_tx_hash": "0x7f4b821908471209384710293847102938471029384710293847102938471029",
-  "blockchain_network": "Polygon zkEVM / AgriChain Testnet",
+  "blockchain_network": "Hyperledger Fabric (Channel: agrichannel)",
   "merkle_root": "0x8fa12c9b4e3d7a10f65c92841b83d09a7e6b5c4d3e2f1a09b8c7d6e5f4a3b2c1",
   "verification_url": "https://agritrace.gov.in/verify/04beaccb-7c55-44ab-aa84-2a3f338dcf1c"
 }

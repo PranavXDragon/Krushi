@@ -1007,8 +1007,8 @@ def verify_shipment_integrity(shipment_id: str, db: Session = Depends(get_db)):
                 "tx_hash": a.tx_hash,
                 "block_number": a.block_number,
                 "network": a.network,
-                "contract_address": getattr(a, "contract_address", "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"),
-                "explorer_url": getattr(a, "explorer_url", None) or f"https://amoy.polygonscan.com/tx/{a.tx_hash}",
+                "contract_address": getattr(a, "contract_address", "agrichannel:agritrace_cc:v1.0"),
+                "explorer_url": getattr(a, "explorer_url", None) or f"http://fabric-explorer.krushi.net/tx/{a.tx_hash}",
                 "records_count": a.records_count,
                 "anchored_at": a.anchored_at.isoformat() if a.anchored_at else None,
                 "status": a.verification_status
@@ -1020,8 +1020,8 @@ def verify_shipment_integrity(shipment_id: str, db: Session = Depends(get_db)):
             "tx_hash": latest_anchor.tx_hash,
             "block_number": latest_anchor.block_number,
             "network": latest_anchor.network,
-            "contract_address": getattr(latest_anchor, "contract_address", "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"),
-            "explorer_url": getattr(latest_anchor, "explorer_url", None) or f"https://amoy.polygonscan.com/tx/{latest_anchor.tx_hash}",
+            "contract_address": getattr(latest_anchor, "contract_address", "agrichannel:agritrace_cc:v1.0"),
+            "explorer_url": getattr(latest_anchor, "explorer_url", None) or f"http://fabric-explorer.krushi.net/tx/{latest_anchor.tx_hash}",
             "anchored_at": latest_anchor.anchored_at.isoformat() if latest_anchor.anchored_at else None
         } if latest_anchor else None,
         "detailed_checks": detailed_checks[-10:] # send last 10 for inspection
@@ -1090,12 +1090,20 @@ def verify_independent_merkle_proof(payload: MerkleVerifyRequestSchema):
 def get_blockchain_contract_info(db: Session = Depends(get_db)):
     anchors_count = db.query(LedgerAnchor).count()
     return {
-        "contract_name": "AgriChainAnchor",
-        "network": "Polygon PoS Amoy Testnet",
-        "chain_id": 80002,
-        "rpc_url": "https://rpc-amoy.polygon.technology",
-        "contract_address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-        "explorer_base_url": "https://amoy.polygonscan.com",
+        "contract_name": "AgriTraceContract (Chaincode)",
+        "network": "Hyperledger Fabric v2.5",
+        "channel_id": "agrichannel",
+        "chaincode_id": "agritrace_cc",
+        "chaincode_version": "v1.0",
+        "endorsement_policy": "AND('ApedaGovMSP.peer', OR('FarmerCoopMSP.peer', 'LogisticsMSP.peer'))",
+        "ordering_service": "raft",
+        "consortium": "KrushiConsortium",
+        "peer_endpoints": [
+            "peer0.apeda-gov.krushi.net:7051",
+            "peer0.farmer-coop.krushi.net:7051",
+            "peer0.logistics.krushi.net:7051"
+        ],
+        "explorer_base_url": "http://fabric-explorer.krushi.net",
         "total_batches_anchored": anchors_count
     }
 
@@ -1179,7 +1187,7 @@ def get_qr_data(shipment_id: str, db: Session = Depends(get_db)):
         "harvest_date": (s.created_at - timedelta(days=1)).strftime("%d %b %Y"),
         "cold_chain_compliance": "99.4% Compliant (GI Grade A)",
         "merkle_root": latest_anchor.merkle_root if latest_anchor else "0x7f48e2b34a1c9056d38e2170ba69145290eafc63109a87d0c75460e1d8894bf2",
-        "blockchain_network": latest_anchor.network if latest_anchor else "Polygon zkEVM / AgriChain Testnet",
+        "blockchain_network": latest_anchor.network if latest_anchor else "Hyperledger Fabric (agrichannel)",
         "tx_hash": latest_anchor.tx_hash if latest_anchor else "0x7f48e2b34a1c9056d38e2170ba69145290eafc63109a87d0c75460e1d8894bf2",
         "status": "AUTHENTIC_VERIFIED"
     }

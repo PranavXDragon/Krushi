@@ -39,7 +39,7 @@ The system encompasses:
 * **FR-07: Tamper Detection & Audit**  
   The backend verification service shall recompute hashes sequentially. Any discrepancy between recomputed hash and stored hash, or broken predecessor pointers, shall be flagged as an integrity failure.
 * **FR-08: Merkle Tree Ledger Anchoring**  
-  The backend shall batch $N$ consecutive record hashes into a binary Merkle tree, derive the Merkle root, and publish the root to a smart contract on the blockchain (Polygon zkEVM / EVM testnet) with an immutable transaction hash.
+  The backend shall batch $N$ consecutive record hashes into a binary Merkle tree, derive the Merkle root, and publish the root to a chaincode on the blockchain (Hyperledger Fabric permissioned ledger) with an immutable transaction ID.
 
 ### Module 3: Communications & Ingestion
 * **FR-09: Idempotent Burst Synchronization**  

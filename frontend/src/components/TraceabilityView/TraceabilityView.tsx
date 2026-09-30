@@ -257,7 +257,7 @@ export const TraceabilityView: React.FC<TraceabilityViewProps> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-800">Decentralized Anchor Proof</h3>
-                  <p className="text-[11px] text-slate-500">Polygon zkEVM / AgriChain Testnet</p>
+                  <p className="text-[11px] text-slate-500">Hyperledger Fabric / agrichannel</p>
                 </div>
               </div>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 uppercase tracking-wider">
@@ -295,12 +295,12 @@ export const TraceabilityView: React.FC<TraceabilityViewProps> = ({
 
                   <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
                     <span className="text-[10px] text-slate-400 block">Network</span>
-                    <span className="text-xs font-bold text-slate-800">Polygon zkEVM</span>
+                    <span className="text-xs font-bold text-slate-800">HLF agrichannel</span>
                   </div>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-slate-500 mt-3">No on-chain anchors committed yet. Click 'Anchor zkEVM' in the top simulation bar.</p>
+              <p className="text-xs text-slate-500 mt-3">No on-chain anchors committed yet. Click 'Anchor Proof' in the top simulation bar.</p>
             )}
           </div>
 

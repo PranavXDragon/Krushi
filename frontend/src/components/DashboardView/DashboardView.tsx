@@ -107,7 +107,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     try {
       const res = await api.anchorBlockchain();
       if (res.status === 'anchored') {
-        onShowToast?.(`Merkle Root anchored on Polygon zkEVM (Block #${res.block_number})`, 'success');
+        onShowToast?.(`Merkle Root anchored on Hyperledger Fabric (Block #${res.block_number})`, 'success');
       }
       onRefresh?.();
     } catch {
@@ -252,7 +252,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
           <div className="text-2xl font-extrabold text-slate-800 font-['Outfit'] mt-2">Verified</div>
-          <span className="text-[11px] text-purple-600 font-semibold mt-1 block">Polygon zkEVM Anchor</span>
+          <span className="text-[11px] text-purple-600 font-semibold mt-1 block">Fabric Ledger Anchor</span>
         </div>
 
       </div>
@@ -363,7 +363,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               onClick={handleAnchor}
               disabled={loadingAction !== null}
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition cursor-pointer shadow-xs disabled:opacity-50"
-              title="Derive Merkle root and anchor telemetry batch to Polygon zkEVM"
+              title="Derive Merkle root and anchor telemetry batch to Hyperledger Fabric"
             >
               <Database className="w-3.5 h-3.5 text-emerald-200" />
               <span>{loadingAction === 'anchor' ? 'Anchoring...' : 'Anchor Proof'}</span>
@@ -536,7 +536,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
-                <span>SHA-256 hash chaining + Polygon zkEVM proof anchoring for independent audits.</span>
+                <span>SHA-256 hash chaining + Hyperledger Fabric ledger anchoring for independent audits.</span>
               </li>
             </ul>
 

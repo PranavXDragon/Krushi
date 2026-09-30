@@ -1,3 +1,6 @@
+# AI Agent config (hidden from GitHub)
+.agents/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -23,10 +26,14 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.pytest_cache/
 
-# Database local runtime
+# Database & runtime artifacts
+*.db
 *.db-journal
 *.sqlite3-journal
+backend/.supabase_last_id
+backend/.offline_edge_queue.json
 
 # Node & Frontend
 frontend/node_modules/
@@ -52,6 +59,8 @@ logs/
 
 # Secrets and environment variables
 .env
-*.env
 backend/.env
 frontend/.env
+# Keep .env.example tracked
+!*.env.example
+!backend/.env.example

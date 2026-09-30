@@ -140,10 +140,13 @@ class LedgerAnchor(Base):
     shipment_id = Column(String, ForeignKey("shipments.id"), index=True)
     batch_code = Column(String)
     merkle_root = Column(String, unique=True)
-    tx_hash = Column(String, unique=True)
-    block_number = Column(Integer)
-    network = Column(String, default="Polygon PoS Amoy Testnet (Chain ID 80002)")
-    contract_address = Column(String, default="0x742d35Cc6634C0532925a3b844Bc454e4438f44e")
+    tx_hash = Column(String, unique=True) # Hyperledger Fabric Transaction ID (64-char hex)
+    block_number = Column(Integer) # Fabric Ledger Block Height
+    network = Column(String, default="Hyperledger Fabric (Channel: agrichannel, CC: agritrace_cc)")
+    channel_id = Column(String, default="agrichannel")
+    chaincode_id = Column(String, default="agritrace_cc")
+    endorsement_peers = Column(String, default="peer0.apeda-gov.krushi.net, peer0.farmer-coop.krushi.net, peer0.logistics.krushi.net")
+    contract_address = Column(String, default="agrichannel:agritrace_cc:v1.0")
     explorer_url = Column(String, nullable=True)
     records_count = Column(Integer)
     start_sequence = Column(Integer)
@@ -159,8 +162,11 @@ def init_db():
         "ALTER TABLE devices ADD COLUMN auth_token TEXT DEFAULT 'krushi_tok_agritrace_001_sec2026'",
         "ALTER TABLE telemetry ADD COLUMN lifecycle_state TEXT DEFAULT 'verified'",
         "ALTER TABLE telemetry ADD COLUMN anchor_id INTEGER",
-        "ALTER TABLE ledger_anchors ADD COLUMN contract_address TEXT DEFAULT '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'",
-        "ALTER TABLE ledger_anchors ADD COLUMN explorer_url TEXT"
+        "ALTER TABLE ledger_anchors ADD COLUMN contract_address TEXT DEFAULT 'agrichannel:agritrace_cc:v1.0'",
+        "ALTER TABLE ledger_anchors ADD COLUMN explorer_url TEXT",
+        "ALTER TABLE ledger_anchors ADD COLUMN channel_id TEXT DEFAULT 'agrichannel'",
+        "ALTER TABLE ledger_anchors ADD COLUMN chaincode_id TEXT DEFAULT 'agritrace_cc'",
+        "ALTER TABLE ledger_anchors ADD COLUMN endorsement_peers TEXT DEFAULT 'peer0.apeda-gov.krushi.net, peer0.farmer-coop.krushi.net, peer0.logistics.krushi.net'"
     ]
     with engine.connect() as conn:
         for sql in migrations:

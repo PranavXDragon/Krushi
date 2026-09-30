@@ -1,21 +1,5 @@
-import React, { useState } from 'react';
-import { 
-  X, 
-  Sprout, 
-  Truck, 
-  ShieldCheck, 
-  ShoppingBag, 
-  Mail, 
-  Lock, 
-  User as UserIcon, 
-  Phone, 
-  Building, 
-  Eye, 
-  EyeOff, 
-  ArrowRight,
-  CheckCircle2,
-  Sparkles
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Sprout, Eye, EyeOff } from 'lucide-react';
 import { api } from '../services/api';
 
 export interface AuthUser {
@@ -56,9 +40,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
   const [organization, setOrganization] = useState('');
   const [role, setRole] = useState<'FARMER' | 'LOGISTICS' | 'INSPECTOR' | 'BUYER'>('FARMER');
+
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setErrorMsg(null);
+    }
+  }, [initialMode, isOpen]);
 
   if (!isOpen) return null;
 
@@ -71,7 +61,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         email: signInEmail.trim(),
         password: signInPassword
       });
-      onShowToast(`Welcome back, ${res.user.name}!`, 'success');
+      onShowToast(`Signed in as ${res.user.name}`, 'success');
       onAuthSuccess(res.user, res.token);
       onClose();
     } catch (err: any) {
@@ -105,138 +95,84 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         email: email.trim(),
         password,
         role,
-        phone: phone.trim() || undefined,
         organization: organization.trim() || undefined
       });
-      onShowToast(`Account created successfully! Welcome, ${res.user.name}.`, 'success');
+      onShowToast(`Account created for ${res.user.name}`, 'success');
       onAuthSuccess(res.user, res.token);
       onClose();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Could not register user account.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async (demoEmail: string) => {
-    setErrorMsg(null);
-    setLoading(true);
-    try {
-      const res = await api.signIn({
-        email: demoEmail,
-        password: 'krushi2026'
-      });
-      onShowToast(`Signed in as ${res.user.name} (${res.user.role})`, 'success');
-      onAuthSuccess(res.user, res.token);
-      onClose();
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Demo login failed.');
+      setErrorMsg(err.message || 'Could not create account.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl p-6 sm:p-7 max-w-md w-full shadow-xl border border-slate-200 relative animate-in fade-in zoom-in-95 duration-150">
         
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-800 flex items-center justify-center absolute right-5 top-5 transition cursor-pointer"
+          className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center absolute right-4 top-4 transition cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
 
-        {/* Modal Header */}
+        {/* Clean Minimal Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-xs flex-shrink-0">
-            <Sprout className="w-6 h-6 text-emerald-600" />
+          <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0">
+            <Sprout className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-extrabold text-slate-900 font-['Outfit']">Krushi Kisan Trace</h2>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 uppercase tracking-wider">
-                Identity
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">National Cold-Chain Provenance & IoT Telematics Portal</p>
+            <h2 className="text-lg font-bold text-slate-900 leading-tight">
+              {mode === 'signin' ? 'Sign in to Krushi' : 'Create an account'}
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {mode === 'signin' 
+                ? 'Enter your credentials to access your portal' 
+                : 'Register for cold-chain monitoring & provenance'}
+            </p>
           </div>
         </div>
 
-        {/* Mode Toggle Switcher */}
-        <div className="flex rounded-xl bg-slate-100 p-1 mb-6">
-          <button
-            type="button"
-            onClick={() => {
-              setMode('signin');
-              setErrorMsg(null);
-            }}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${
-              mode === 'signin' 
-                ? 'bg-white text-slate-900 shadow-xs' 
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode('signup');
-              setErrorMsg(null);
-            }}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${
-              mode === 'signup' 
-                ? 'bg-white text-slate-900 shadow-xs' 
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Create Account
-          </button>
-        </div>
-
-        {/* Error Alert Banner */}
+        {/* Error Alert */}
         {errorMsg && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+          <div className="mb-4 px-3.5 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
             {errorMsg}
           </div>
         )}
 
-        {/* ================= SIGN IN VIEW ================= */}
+        {/* ================= SIGN IN FORM ================= */}
         {mode === 'signin' && (
           <form onSubmit={handleSignIn} className="space-y-4">
             <div>
-              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
-                Email Address
+              <label className="text-xs font-semibold text-slate-700 block mb-1.5">
+                Email address
               </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  required
-                  placeholder="e.g. rajesh.patil@kisan.in"
-                  value={signInEmail}
-                  onChange={(e) => setSignInEmail(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
-                />
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              </div>
+              <input
+                type="email"
+                required
+                placeholder="name@example.com"
+                value={signInEmail}
+                onChange={(e) => setSignInEmail(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+              />
             </div>
 
             <div>
-              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
+              <label className="text-xs font-semibold text-slate-700 block mb-1.5">
                 Password
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder="Enter password"
+                  placeholder="Enter your password"
                   value={signInPassword}
                   onChange={(e) => setSignInPassword(e.target.value)}
-                  className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+                  className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
                 />
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -250,195 +186,102 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-xs transition cursor-pointer disabled:opacity-50 mt-1"
             >
-              <span>{loading ? 'Signing in...' : 'Sign In to Portal'}</span>
-              <ArrowRight className="w-4 h-4" />
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
 
-            {/* Quick 1-Click Demo Profiles */}
-            <div className="pt-4 border-t border-slate-100">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Quick 1-Click Demo Logins
-                </span>
-                <Sparkles className="w-3 h-3 text-amber-500" />
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin('rajesh.patil@kisan.in')}
-                  className="p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 text-left border border-slate-200 hover:border-emerald-200 transition group"
-                >
-                  <div className="flex items-center gap-1.5 text-slate-700 group-hover:text-emerald-700">
-                    <Sprout className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                    <span className="text-[11px] font-bold truncate">Farmer</span>
-                  </div>
-                  <span className="text-[10px] text-slate-400 block truncate mt-0.5">R. Patil</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin('transport@kisancold.in')}
-                  className="p-2 rounded-xl bg-slate-50 hover:bg-teal-50 text-left border border-slate-200 hover:border-teal-200 transition group"
-                >
-                  <div className="flex items-center gap-1.5 text-slate-700 group-hover:text-teal-700">
-                    <Truck className="w-3.5 h-3.5 text-teal-600 flex-shrink-0" />
-                    <span className="text-[11px] font-bold truncate">Logistics</span>
-                  </div>
-                  <span className="text-[10px] text-slate-400 block truncate mt-0.5">KisanCold</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin('inspector.mehta@apeda.gov.in')}
-                  className="p-2 rounded-xl bg-slate-50 hover:bg-purple-50 text-left border border-slate-200 hover:border-purple-200 transition group"
-                >
-                  <div className="flex items-center gap-1.5 text-slate-700 group-hover:text-purple-700">
-                    <ShieldCheck className="w-3.5 h-3.5 text-purple-600 flex-shrink-0" />
-                    <span className="text-[11px] font-bold truncate">Inspector</span>
-                  </div>
-                  <span className="text-[10px] text-slate-400 block truncate mt-0.5">APEDA Govt</span>
-                </button>
-              </div>
+            <div className="pt-3 border-t border-slate-100 text-center text-xs text-slate-500">
+              Don&apos;t have an account?{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('signup');
+                  setErrorMsg(null);
+                }}
+                className="font-semibold text-emerald-600 hover:text-emerald-700 cursor-pointer"
+              >
+                Create account
+              </button>
             </div>
           </form>
         )}
 
-        {/* ================= SIGN UP VIEW ================= */}
+        {/* ================= SIGN UP FORM ================= */}
         {mode === 'signup' && (
           <form onSubmit={handleSignUp} className="space-y-3.5">
-            {/* Role Selection */}
             <div>
-              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1.5">
-                Select Your Role in Cold-Chain
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Full name
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { id: 'FARMER', label: 'Farmer / Co-op', icon: Sprout, desc: 'Produce origin & seals' },
-                  { id: 'LOGISTICS', label: 'Fleet Carrier', icon: Truck, desc: 'Reefer trucks & GPS' },
-                  { id: 'INSPECTOR', label: 'APEDA Inspector', icon: ShieldCheck, desc: 'Quality audit & safety' },
-                  { id: 'BUYER', label: 'Mandi Buyer', icon: ShoppingBag, desc: 'Intake & provenance' }
-                ].map(r => {
-                  const Icon = r.icon;
-                  const isSelected = role === r.id;
-                  return (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => setRole(r.id as any)}
-                      className={`p-2.5 rounded-xl border text-left transition flex items-start gap-2.5 ${
-                        isSelected 
-                          ? 'bg-emerald-50/80 border-emerald-500 ring-2 ring-emerald-500/20' 
-                          : 'bg-slate-50 border-slate-200 hover:bg-slate-100/60'
-                      }`}
-                    >
-                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                        isSelected ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-                      }`}>
-                        <Icon className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-xs font-bold text-slate-800 block truncate leading-tight">
-                          {r.label}
-                        </span>
-                        <span className="text-[10px] text-slate-400 block truncate mt-0.5">
-                          {r.desc}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Rajesh Patil"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+              />
             </div>
 
-            {/* Full Name */}
             <div>
-              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
-                Full Name
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Email address
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Ramesh Deshmukh"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
-                />
-                <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              </div>
+              <input
+                type="email"
+                required
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+              />
             </div>
 
-            {/* Email & Phone Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
-                  Email
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  Role
                 </label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    required
-                    placeholder="name@domain.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
-                  />
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                </div>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as any)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+                >
+                  <option value="FARMER">Farmer / Co-op</option>
+                  <option value="LOGISTICS">Logistics Carrier</option>
+                  <option value="INSPECTOR">Quality Inspector</option>
+                  <option value="BUYER">Mandi Buyer</option>
+                </select>
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
-                  Phone (Optional)
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  Organization
                 </label>
-                <div className="relative">
-                  <input
-                    type="tel"
-                    placeholder="+91 98XXX XXXXX"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
-                  />
-                  <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                </div>
-              </div>
-            </div>
-
-            {/* Cooperative / Organization */}
-            <div>
-              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
-                Organization / Co-op Name
-              </label>
-              <div className="relative">
                 <input
                   type="text"
-                  placeholder="e.g. Ratnagiri Alphonso Farmers Co-op"
+                  placeholder="Optional"
                   value={organization}
                   onChange={(e) => setOrganization(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
                 />
-                <Building className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1">
-                Create Password
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Password
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  placeholder="At least 6 characters"
+                  placeholder="Minimum 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-9 pr-10 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+                  className="w-full pl-3.5 pr-10 py-2 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
                 />
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -452,11 +295,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-xs transition cursor-pointer disabled:opacity-50 mt-1"
             >
-              <span>{loading ? 'Creating Account...' : 'Complete Registration'}</span>
-              <CheckCircle2 className="w-4 h-4" />
+              {loading ? 'Creating account...' : 'Create Account'}
             </button>
+
+            <div className="pt-3 border-t border-slate-100 text-center text-xs text-slate-500">
+              Already have an account?{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('signin');
+                  setErrorMsg(null);
+                }}
+                className="font-semibold text-emerald-600 hover:text-emerald-700 cursor-pointer"
+              >
+                Sign in
+              </button>
+            </div>
           </form>
         )}
 

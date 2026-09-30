@@ -256,124 +256,118 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       </div>
 
-      {/* Integrated IoT Edge Telematics & Field Validation Console */}
-      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-100 gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0">
-              <Cpu className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-slate-900">IoT Edge Telematics & Hardware Console</h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold">
-                  Node #AGRITRACE-001
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                SECP256k1 signed sensor ingest, offline mountain blindzone queuing, and on-chain zkEVM anchoring
-              </p>
-            </div>
-          </div>
-
+      {/* Integrated SIH26232 IoT Hardware & Telemetry Simulator Card */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {/* Left: Status Pills */}
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* Live Connectivity Badge */}
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition ${
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-xs font-bold tracking-wide">
+              <Cpu className="w-3.5 h-3.5 text-emerald-600" />
+              <span>SIH26232 IoT SIMULATOR</span>
+            </div>
+
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
               isOnline 
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                ? 'bg-emerald-50/70 text-emerald-700 border-emerald-200' 
                 : 'bg-amber-50 text-amber-800 border-amber-200 animate-pulse'
             }`}>
-              {isOnline ? <Wifi className="w-3.5 h-3.5 text-emerald-600" /> : <WifiOff className="w-3.5 h-3.5 text-amber-600" />}
-              <span>{isOnline ? 'LTE-M 4G Active' : `Offline Blindspot (${queuedCount} Queued)`}</span>
+              <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500 animate-ping'}`} />
+              <span>{isOnline ? 'Node Online' : `Offline Queue (${queuedCount})`}</span>
             </div>
 
-            {/* Solar Power Status */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs text-slate-600 font-semibold">
+            <div className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-[11px] text-slate-600 font-medium">
               <Sun className="w-3.5 h-3.5 text-amber-500" />
-              <span>Solar: 320 mW</span>
+              <span>ESP32-S3 #AGRITRACE-001 · Solar 320mW</span>
             </div>
           </div>
-        </div>
 
-        {/* Action Controls Toolbar */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Sample Ingest */}
-          <button
-            onClick={handleTick}
-            disabled={loadingAction === 'tick'}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs disabled:opacity-50"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>{loadingAction === 'tick' ? 'Sampling...' : 'Sample 10s Telemetry'}</span>
-          </button>
+          {/* Right: Integrated Simulator Controls */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Emit Reading */}
+            <button
+              onClick={handleTick}
+              disabled={loadingAction !== null}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200/90 text-xs font-semibold transition cursor-pointer shadow-2xs disabled:opacity-50"
+              title="Generate and ingest next sequential telemetry sample"
+            >
+              <Play className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{loadingAction === 'tick' ? 'Emitting...' : 'Emit Reading'}</span>
+            </button>
 
-          {/* Toggle Online / Offline */}
-          <button
-            onClick={handleToggleNetwork}
-            disabled={loadingAction === 'net'}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition shadow-xs disabled:opacity-50 ${
-              isOnline 
-                ? 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300' 
-                : 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600'
-            }`}
-          >
-            {isOnline ? <WifiOff className="w-3.5 h-3.5 text-amber-600" /> : <Wifi className="w-3.5 h-3.5 text-white" />}
-            <span>{isOnline ? 'Simulate Mountain Blindspot' : 'Restore Cellular Network'}</span>
-          </button>
+            {/* Simulate Offline / Go Online */}
+            <button
+              onClick={handleToggleNetwork}
+              disabled={loadingAction !== null}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer shadow-2xs disabled:opacity-50 ${
+                isOnline 
+                  ? 'bg-amber-50/80 hover:bg-amber-100/80 text-amber-800 border-amber-200' 
+                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300'
+              }`}
+              title={isOnline ? 'Simulate network loss (blindspot) and start local offline queue' : 'Restore cellular connectivity'}
+            >
+              {isOnline ? <WifiOff className="w-3.5 h-3.5 text-amber-600" /> : <Wifi className="w-3.5 h-3.5 text-emerald-600" />}
+              <span>{isOnline ? 'Simulate Offline' : 'Restore Online'}</span>
+            </button>
 
-          {/* Burst Sync */}
-          <button
-            onClick={handleBatchSync}
-            disabled={loadingAction === 'sync' || queuedCount === 0}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs disabled:opacity-40"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 text-teal-600 ${loadingAction === 'sync' ? 'animate-spin' : ''}`} />
-            <span>Burst Batch Sync {queuedCount > 0 ? `(${queuedCount})` : ''}</span>
-          </button>
+            {/* Burst Sync */}
+            <button
+              onClick={handleBatchSync}
+              disabled={loadingAction !== null || queuedCount === 0}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition shadow-2xs ${
+                queuedCount > 0
+                  ? 'bg-blue-600 hover:bg-blue-500 text-white border-blue-600 cursor-pointer animate-pulse'
+                  : 'bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed'
+              }`}
+              title="Burst transmit all locally buffered records from edge flash"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loadingAction === 'sync' ? 'animate-spin' : ''}`} />
+              <span>Burst Sync ({queuedCount})</span>
+            </button>
 
-          {/* Anchor zkEVM */}
-          <button
-            onClick={handleAnchor}
-            disabled={loadingAction === 'anchor'}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-purple-700 border border-purple-200 text-xs font-bold transition shadow-xs disabled:opacity-50"
-          >
-            <Database className="w-3.5 h-3.5 text-purple-600" />
-            <span>{loadingAction === 'anchor' ? 'Anchoring...' : 'Anchor zkEVM Proof'}</span>
-          </button>
+            {/* Gas Spike */}
+            <button
+              onClick={handleGasSpike}
+              disabled={loadingAction !== null}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50/80 hover:bg-rose-100/80 text-rose-700 border border-rose-200 text-xs font-semibold transition cursor-pointer shadow-2xs disabled:opacity-50"
+              title="Inject ripening gas excursion (> 50 ppm)"
+            >
+              <Flame className="w-3.5 h-3.5 text-rose-500" />
+              <span>Gas Spike</span>
+            </button>
 
-          {/* Divider */}
-          <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
+            {/* Temp Spike */}
+            <button
+              onClick={handleTempSpike}
+              disabled={loadingAction !== null}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50/80 hover:bg-rose-100/80 text-rose-700 border border-rose-200 text-xs font-semibold transition cursor-pointer shadow-2xs disabled:opacity-50"
+              title="Inject refrigeration excursion (> 8°C)"
+            >
+              <Thermometer className="w-3.5 h-3.5 text-rose-500" />
+              <span>Temp Spike</span>
+            </button>
 
-          {/* Tripwire & Excursion Tests */}
-          <button
-            onClick={handleGasSpike}
-            disabled={loadingAction === 'gas'}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-amber-50/80 text-amber-700 border border-amber-200 text-xs font-bold transition shadow-xs disabled:opacity-50"
-            title="Inject ripening gas excursion > 50 ppm"
-          >
-            <Flame className="w-3.5 h-3.5 text-amber-500" />
-            <span>Test Gas Spike</span>
-          </button>
+            {/* Corrupt Hash */}
+            <button
+              onClick={handleTamper}
+              disabled={loadingAction !== null}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-50/80 hover:bg-purple-100/80 text-purple-700 border border-purple-200 text-xs font-semibold transition cursor-pointer shadow-2xs disabled:opacity-50"
+              title="Simulate bit tamper in database to verify cryptographic detection"
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-purple-600" />
+              <span>Corrupt Hash</span>
+            </button>
 
-          <button
-            onClick={handleTempSpike}
-            disabled={loadingAction === 'temp'}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-rose-50/80 text-rose-700 border border-rose-200 text-xs font-bold transition shadow-xs disabled:opacity-50"
-            title="Inject temperature excursion > 8°C"
-          >
-            <Thermometer className="w-3.5 h-3.5 text-rose-500" />
-            <span>Test Temp Spike</span>
-          </button>
-
-          <button
-            onClick={handleTamper}
-            disabled={loadingAction === 'tamper'}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-rose-50/80 text-slate-700 border border-slate-300 text-xs font-bold transition shadow-xs disabled:opacity-50"
-            title="Simulate bit tamper in database to verify cryptographic detection"
-          >
-            <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
-            <span>Audit Tamper Test</span>
-          </button>
+            {/* Anchor Proof */}
+            <button
+              onClick={handleAnchor}
+              disabled={loadingAction !== null}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition cursor-pointer shadow-xs disabled:opacity-50"
+              title="Derive Merkle root and anchor telemetry batch to Polygon zkEVM"
+            >
+              <Database className="w-3.5 h-3.5 text-emerald-200" />
+              <span>{loadingAction === 'anchor' ? 'Anchoring...' : 'Anchor Proof'}</span>
+            </button>
+          </div>
         </div>
       </div>
 

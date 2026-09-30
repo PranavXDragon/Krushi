@@ -1,4 +1,4 @@
-# AgriTrace (SIH26232)
+# KRUSHI — कृषि (SIH26232)
 ### **Offline-First IoT & Blockchain-Enabled Farm-to-Fork Traceability**
 *Smart India Hackathon 2024 / 2026 — Problem Statement 26232*  
 *Ministry of Food Processing Industries (MoFPI) | Hardware & Software Track*
@@ -7,9 +7,9 @@
 
 ## 📌 Executive Summary
 
-**AgriTrace** is an end-to-end, rugged, affordable, and offline-first cold-chain traceability platform engineered specifically for agricultural supply chains in India. Standard cold-chain loggers lose connectivity across remote rural routes, creating critical telemetry blind spots. Furthermore, conventional enterprise solutions are prohibitively expensive for smallholder farmers and agricultural SMEs.
+**KRUSHI (कृषि)** is an end-to-end, rugged, affordable, and offline-first cold-chain traceability platform engineered specifically for agricultural supply chains in India. Standard cold-chain loggers lose connectivity across remote rural routes, creating critical telemetry blind spots. Furthermore, conventional enterprise solutions are prohibitively expensive for smallholder farmers and agricultural SMEs.
 
-AgriTrace solves this by combining:
+KRUSHI solves this by combining:
 1. **Low-Cost Rugged IoT Sensor Nodes** with local cryptographic flash storage and solar energy harvesting.
 2. **Offline-First Local Queuing & Monotonic Chaining**, ensuring zero data loss during rural transit blind spots.
 3. **SHA-256 Hash Chaining & Instant Tamper Detection**, mathematically guaranteeing data integrity from the physical node.
@@ -35,7 +35,7 @@ AgriTrace solves this by combining:
 ## 📸 Application Screenshots & UI Showcase
 
 <p align="center">
-  <img src="screenshots/Screenshot%202026-09-30%20135435.png" alt="AgriTrace Live Cold-Chain Reefer Monitoring" width="100%" />
+  <img src="screenshots/Screenshot%202026-09-30%20135435.png" alt="KRUSHI Live Cold-Chain Reefer Monitoring" width="100%" />
 </p>
 
 ### 1. Operations & Monitoring Views
@@ -82,7 +82,7 @@ graph TD
         FLASH -. Bulk Replay .-> MQTT
     end
 
-    subgraph Backend_Cloud["AgriTrace Backend Platform"]
+    subgraph Backend_Cloud["KRUSHI Backend Platform"]
         FASTAPI["FastAPI REST & WebSocket Server"]
         SQLITE["Relational Telemetry DB (SQLite/PostgreSQL)"]
         CRYPTO_SERVICE["Crypto Engine & Hash Chain Verifier"]
@@ -95,11 +95,11 @@ graph TD
     end
 
     subgraph Blockchain_Layer["Decentralized Ledger"]
-        SMART_CONTRACT["AgriTrace Chaincode<br/>(Hyperledger Fabric)"]
+        SMART_CONTRACT["KRUSHI Chaincode<br/>(Hyperledger Fabric)"]
         MERKLE_ENGINE -->|Anchors Merkle Root| SMART_CONTRACT
     end
 
-    subgraph Frontend_App["AgriTrace Web Dashboard"]
+    subgraph Frontend_App["KRUSHI Web Dashboard"]
         DASHBOARD["Operations Dashboard & KPI Center"]
         TRUCK_VIEW["Truck-Centric Compartment Overlay"]
         VERIFIER["Cryptographic Chain Explorer"]
@@ -148,7 +148,7 @@ Hᵢ = SHA-256( Canonical( DeviceID, ShipmentID, Seqᵢ, Timestamp, Temp, Humidi
   ```
 
 ### 3. Merkle Tree Ledger Anchoring
-Instead of recording every single raw sensor reading on-chain, AgriTrace batches sequences into a binary Merkle tree:
+Instead of recording every single raw sensor reading on-chain, KRUSHI batches sequences into a binary Merkle tree:
 
 ```
                  [Merkle Root]  ← Anchored on Hyperledger Fabric
@@ -246,7 +246,7 @@ npm run dev
 
 ## 🧪 SIH Presentation & Demonstration Guide
 
-AgriTrace includes an **Interactive Simulation Bar** at the top of the dashboard specifically designed to demonstrate all SIH26232 problem statement criteria live to evaluators:
+KRUSHI includes an **Interactive Simulation Bar** at the top of the dashboard specifically designed to demonstrate all SIH26232 problem statement criteria live to evaluators:
 
 1. **Simulate Offline Rural Transit**:
    * Click **`Go Offline`** in the simulation bar. The node switches to `Disconnected (Queueing)`.

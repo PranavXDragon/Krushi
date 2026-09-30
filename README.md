@@ -247,24 +247,25 @@ npm run dev
 
 ## 🧪 SIH Presentation & Demonstration Guide
 
-KRUSHI includes an **Interactive Simulation Bar** at the top of the dashboard specifically designed to demonstrate all SIH26232 problem statement criteria live to evaluators:
+KRUSHI includes an **Interactive Simulation Bar** at the top of the Operations Dashboard specifically designed to demonstrate all SIH26232 evaluation criteria live:
 
-1. **Simulate Offline Rural Transit**:
-   * Click **`Go Offline`** in the simulation bar. The node switches to `Disconnected (Queueing)`.
-   * Click **`Tick +1 Sample`** multiple times. Notice samples increment their monotonic sequence numbers and are stored safely in the local hardware queue.
-2. **Simulate Network Reconnection & Burst Sync**:
-   * Click **`Go Online`**.
-   * Click **`MQTT Burst Sync`**. All queued records are ingested in an idempotent burst, updating the dashboard instantly without any lost readings.
-3. **Simulate Cold-Chain Excursions**:
-   * Click **`Inject Temp Spike (33.5°C)`** or **`Inject Gas Spike (64.8 ppm)`**.
-   * An instant **CRITICAL** alert is generated, the truck overlay flags the affected compartment in red, and the excursion event is logged to the timeline.
+1. **Simulate Offline Rural Transit & Edge Queuing**:
+   * Click **`Simulate Offline`** in the simulation card. The status pill transitions from `Node Online` to `Offline Queue`.
+   * Click **`Emit Reading`** multiple times. Telemetry records increment their monotonic sequence counter ($Seq_i$) and are safely buffered in local non-volatile edge flash without data loss.
+2. **Simulate Cellular Reconnection & Burst Sync**:
+   * Click **`Restore Online`**.
+   * Click **`Burst Sync (N)`**. All buffered edge records are ingested in an idempotent burst sync, verifying digests and updating dashboard charts without losing a single reading.
+3. **Simulate Real-Time Cold-Chain Excursions**:
+   * Click **`Temp Spike`** (injects 33.5°C breach) or **`Gas Spike`** (injects 64.8 ppm ethylene breach).
+   * An instant **CRITICAL** exception is triggered, the truck compartment visualizer highlights the affected zone in red, and the event logs to the cargo timeline.
 4. **Demonstrate Cryptographic Tamper Detection**:
-   * Click **`Corrupt Hash (Tamper)`**. This maliciously modifies a stored database hash to prove integrity detection.
-   * Navigate to the **Traceability** tab and click **`Audit Proof Chain`**. The system immediately catches the cryptographic fault, pinpointing the exact corrupted block sequence and showing `Integrity Mismatch`.
+   * Click **`Corrupt Hash`**. This intentionally mutates a stored historical hash in the database to simulate malicious tampering.
+   * Switch to the **Traceability** tab and click **`Audit Proof Chain`**. The cryptographic engine immediately flags **`SEQUENCE TAMPER DETECTED`**, pinpointing the exact corrupted block sequence and preventing invalid certificates.
 5. **Decentralized Ledger Anchoring**:
-   * Click **`Anchor to Ledger`**. The system compiles current hash records into a **Merkle Tree**, derives the root, and generates an on-chain transaction anchor on the Hyperledger Fabric ledger (`agrichannel`).
-6. **Consumer QR Provenance**:
-   * In the **Traceability** tab, click **`Generate Consumer QR`** to view the live transparency certificate with GI-tag details and immutable handover proof.
+   * Click **`Anchor Proof`** in the simulation card. The system compiles recent verified telemetry records into a binary **Merkle Tree**, derives the 32-byte root, and commits an immutable transaction anchor to Hyperledger Fabric (`agrichannel`).
+6. **Consumer GI-Tag & Freshness QR Verification**:
+   * On the **Traceability** tab, click **`Generate Consumer QR`** (or navigate to the **Consumer Verify** tab).
+   * Evaluators can scan the QR code with any smartphone to inspect the live farm-to-fork origin certificate, APEDA compliance scorecard, and verifiable handover log.
 
 ---
 

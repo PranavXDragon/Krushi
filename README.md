@@ -22,10 +22,10 @@ KRUSHI solves this by combining:
 
 | Capability | Technical Implementation | Value to Supply Chain |
 | :--- | :--- | :--- |
-| **Offline-First Telemetry** | Local non-volatile circular queue + monotonic sequence counter ($Seq_i = Seq_{i-1} + 1$) | Zero data loss in remote rural areas with intermittent 2G/4G connectivity. |
-| **Tamper-Evident Hash Chain** | Canonical JSON + SHA-256 pointer chain ($H_i = \text{SHA256}(\dots, H_{i-1})$) | Prevents driver or database manipulation; detect unauthorized alterations immediately. |
-| **Decentralized Ledger Proofs** | Batch Merkle Tree aggregation anchored to smart contracts | Scalable verification with verifiable block numbers and transaction hashes. |
-| **Environmental Monitoring** | Temperature, relative humidity, and ethylene gas ($C_2H_4$) | Detects spoilage, chilling injury, and premature fruit ripening in transit. |
+| **Offline-First Telemetry** | Local non-volatile circular queue + monotonic sequence counter (Seqᵢ = Seqᵢ₋₁ + 1) | Zero data loss in remote rural areas with intermittent 2G/4G connectivity. |
+| **Tamper-Evident Hash Chain** | Canonical JSON + SHA-256 pointer chain (Hᵢ = SHA-256(..., Hᵢ₋₁)) | Prevents driver or database manipulation; detect unauthorized alterations immediately. |
+| **Decentralized Ledger Proofs** | Batch Merkle Tree aggregation anchored to Hyperledger Fabric chaincode | Scalable verification with verifiable block numbers and transaction hashes. |
+| **Environmental Monitoring** | Temperature, relative humidity, and ethylene gas (C₂H₄) | Detects spoilage, chilling injury, and premature fruit ripening in transit. |
 | **Physical Compartment Mapping** | Multi-cell truck overlay UI mapping physical reefer zones | Isolates thermal excursions to specific cargo sections (e.g. forward vs. rear compartment). |
 | **Consumer QR Provenance** | Instant mobile-friendly GI-tag and cold-chain compliance certificate | Empowers retailers and buyers to verify freshness and farm origin with 1 scan. |
 | **Solar Energy Harvesting** | Dynamic battery monitoring + photovoltaic power circuit simulation | Extends autonomous node lifespan across long-haul multi-state transit routes. |
@@ -42,7 +42,7 @@ KRUSHI solves this by combining:
 | 🚛 Multi-Compartment Reefer Telemetry | 🌾 Kisan & Supply Chain Overview |
 | :---: | :---: |
 | <img src="screenshots/Screenshot%202026-09-30%20135435.png" alt="Live Cold-Chain Monitoring" width="100%"/> | <img src="screenshots/Screenshot%202026-09-30%20135352.png" alt="Kisan & Supply Chain Dashboard" width="100%"/> |
-| *Real-time temperature, humidity, ripening ethylene ($C_2H_4$) & truck compartment mapping* | *Active transit corridors, GPS coordinates, blindspot sync health, and active fleets* |
+| *Real-time temperature, humidity, ripening ethylene (C₂H₄) & truck compartment mapping* | *Active transit corridors, GPS coordinates, blindspot sync health, and active fleets* |
 
 ### 2. Cryptographic Provenance & Verification
 | 🔗 Tamper-Proof Audit & Blockchain Proofs | 📱 Consumer Transparency QR Certificate |
@@ -121,7 +121,7 @@ To guarantee cross-platform deterministic hashing, telemetry payloads are format
 ```json
 {
   "battery": 94.5,
-  "device_id": "AGRITRACE-001",
+  "device_id": "KRUSHI-NODE-001",
   "gas_ethylene": 13.5,
   "humidity": 78.0,
   "latitude": 19.076,
@@ -261,7 +261,7 @@ KRUSHI includes an **Interactive Simulation Bar** at the top of the dashboard sp
    * Click **`Corrupt Hash (Tamper)`**. This maliciously modifies a stored database hash to prove integrity detection.
    * Navigate to the **Traceability** tab and click **`Audit Proof Chain`**. The system immediately catches the cryptographic fault, pinpointing the exact corrupted block sequence and showing `Integrity Mismatch`.
 5. **Decentralized Ledger Anchoring**:
-   * Click **`Anchor to Ledger`**. The system compiles current hash records into a **Merkle Tree**, derives the root, and generates an on-chain transaction hash on the AgriChain testnet.
+   * Click **`Anchor to Ledger`**. The system compiles current hash records into a **Merkle Tree**, derives the root, and generates an on-chain transaction anchor on the Hyperledger Fabric ledger (`agrichannel`).
 6. **Consumer QR Provenance**:
    * In the **Traceability** tab, click **`Generate Consumer QR`** to view the live transparency certificate with GI-tag details and immutable handover proof.
 

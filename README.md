@@ -138,7 +138,10 @@ To guarantee cross-platform deterministic hashing, telemetry payloads are format
 Every telemetry reading calculates its cryptographic identity recursively:
 
 ```
-Hᵢ = SHA-256( Canonical( DeviceID, ShipmentID, Seqᵢ, Timestamp, Temp, Humidity, Gas, Lat, Lon, Battery, Hᵢ₋₁ ) )
+Hᵢ = SHA-256( Canonical(
+    DeviceID, ShipmentID, Seqᵢ, Timestamp,
+    Temp, Humidity, Gas, Lat, Lon, Battery, Hᵢ₋₁
+) )
 ```
 
 * **Genesis**: `H₀ = GENESIS_ROOT_0000000000000000000000000000000000000000000000000000`
